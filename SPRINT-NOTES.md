@@ -19,6 +19,13 @@ git add -A && git commit -m "<message>"
 TOKEN=$(grep '^MCP_GITHUB_API_KEY=' "$HOME/AppData/Local/hermes/.env" | head -1 | cut -d= -f2- | tr -d '"' | tr -d '\r')
 GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${TOKEN}@github.com/Wassuplol/mem.git" main
 ```
+**If the push is REJECTED (remote moved - parallel sessions):**
+```bash
+URL="https://x-access-token:${TOKEN}@github.com/Wassuplol/mem.git"
+GIT_TERMINAL_PROMPT=0 git -c credential.helper= fetch "$URL" main
+git -c credential.helper= rebase FETCH_HEAD   # "skipped previously applied" is fine
+GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "$URL" main
+```
 
 ## Verify commands
 - typecheck: `pnpm -r typecheck`
@@ -47,7 +54,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 - Server Members intent is OPTIONAL via `ENABLE_MEMBERS_INTENT=1` (also toggle in Dev Portal). Off by default so login never breaks.
 
 ## Backlog (priority order)
-- [~] Command catalog @ 300+ (OWNER DIRECTIVE, supersedes 100/250): expand docs/COMMAND-CATALOG.md to 300+ first-party commands without plugins. ~260 top-level slots (100 global + 100 guild-tier + ~60 context menus) + subcommand families (25/command, 25x25 groups); count subcommands as commands. Include navigation + platform-squeeze + tutorial plan.
+- [x] Command catalog @ 300+ DONE (live, ~18:25): docs/COMMAND-CATALOG.md section 7 = master list of 319 targets (34 live / 226 next / 59 planned) + slot-tier math (G/X/M), navigation, tutorial/3D spike, platform-squeeze checklist, build order.
 - [~] EPIC NAVIGATION: /help hub v1 SHIPPED (categories + pagination + autocomplete). Remaining: dashboard command explorer, polish (emoji per category, direct /help links).
 - [ ] EPIC ONBOARDING: /tutorial module + AI concierge (BYO endpoint) + button-driven wizard; Components V2 where valuable; hero art for help/onboarding.
 - [ ] SPIKE (note only, do NOT build yet): Discord Activities (Embedded App SDK) as the true-3D path - web app inside voice channels, reusing dashboard tech.
@@ -63,6 +70,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 - Target < 200 MB RSS with a handful of guilds; commands are thin wrappers, heavy logic lives in shared services so the dashboard API can reuse it. Verify via /botinfo once the real bot runs.
 
 ## Run log
+- Run 4.5 (live, ~18:18-18:30): catalog section 7 - 300+ master plan (319 targets, slot math, navigation, tutorial, platform-squeeze, build order). Timer paused during this live chunk.
 - Run 0 (live, ~15:20-16:00): mod_cases + services + migration; moderation x9 + utility x7 suites; RAM cache config; auth-smoke + mod-smoke.
 - Run 0.5 (live, ~16:00-16:50): kernel events; logging + welcome modules (events + commands); removewarn/mute/unmute; /api/guilds + /servers page (verified full chain: 401 -> 409 -> 401 discord_token_expired); ops notes above.
 - Run 1 (cron, ~16:27-17:00): docs/COMMAND-CATALOG.md (100-cmd target = 24 live / 65 next / 11 planned; Discord-cap + families/per-guild/plugins strategy; receipts); /say + /announce shipped in utility (24 cmds total; typecheck + boot smoke green: "24 command(s) across 5 module(s)"); fixed push-recipe line.

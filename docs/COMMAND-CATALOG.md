@@ -298,3 +298,464 @@ pattern: pick a custom-id scheme, register one `ComponentHandler`, keep heavy st
 - Wick: <https://docs.wickbot.com/intro/features>
 - Discord limits: <https://discord.com/developers/docs/interactions/application-commands>
 - Fun-bot aisle: top.gg (fun/game tags), Geri, Erisly listings
+
+---
+
+# 7. v2 - OWNER DIRECTIVE: the 300+ first-party plan
+
+Supersedes the ~100 target in section 3. Master list below: **319 targets** - `34` live, `226` next, `59` planned. All first-party, no plugins required for any of it.
+
+## 7.1 How 300+ fits inside Discord's limits (verified)
+
+- Top-level slots per server: **100 global** chat commands + **100 more in guild scope** (registered per-guild) + context menus (up to **15 user + 15 message per scope**) = **~260 top-level slots**, all ours.
+- Depth: one command can carry **25 subcommands** (or 25 subcommand groups x 25 subcommands = up to 625 sub-actions).
+- Counting rule (industry standard): **subcommands count as commands** (e.g. `/poll create`, `/poll end`, `/poll list` = 3).
+- Tiers: **G** = global core (always registered) - most of the list. **X** = extended pack, registered per-guild when the server enables it in the dashboard. **M** = context menus. Assignment happens during the build; heavy/niche items can shift to X.
+- Optional surfaces (not needed for the 300): prefix text commands (self-host only, needs Message Content intent) and user-install commands (same budget, appear in DMs).
+
+## 7.2 Navigation & discovery (first-class requirement)
+
+- SHIPPED: `/help` hub - category browser, pagination, autocomplete search.
+- Next: emoji per category, `/help <command>` deep view, dashboard command explorer, docs site.
+- Naming conventions: families are verbs/nouns by domain (`mod`, `role`, `voice`, `ticket`...); consistent option names (`user`, `reason`, `duration`).
+- Philosophy: autocomplete-first - type 3 letters, find anything; nobody memorizes 300.
+
+## 7.3 Onboarding, tutorial & the 3D question
+
+- `/tutorial` module: interactive walkthrough (buttons), per-module setup guides.
+- AI concierge (BYO endpoint): answers "how do I..." and walks admins through setup conversationally; can pre-fill config suggestions.
+- 3D: impossible inside Discord messages. Real path = **Discord Activity** (Embedded App SDK, web app in voice channels) - SPIKE ONLY, later phase, reuses dashboard tech.
+- In-Discord epic: Components V2 rich layouts, generated hero art for help/onboarding, polished button/select/modal flows everywhere.
+
+## 7.4 Platform-squeeze checklist
+
+- [x] Components (buttons/selects) + modals - kernel shipped, 3 reference patterns live (`help:`, `poll:`, `rrole:`)
+- [x] Autocomplete - kernel shipped (help search)
+- [ ] Context menus (both scopes) - designed (section W), next batch
+- [ ] Components V2 layouts - evaluate for help/onboarding panels
+- [ ] Native Discord polls - augment /poll output
+- [ ] AutoMod API - drives the automod module
+- [ ] Guild onboarding API - welcome flow integration
+- [ ] Scheduled events API - create/manage events
+- [ ] Forums/threads - ticket system core
+- [ ] Soundboard - fun/notification integration
+- [ ] User-install commands - personal commands in DMs
+- [ ] i18n-ready strings - localization pass
+- [ ] Command permission defaults - per-command locking
+
+## 7.5 The master list (319 targets)
+
+Status: L = live, N = next (buildable in current phases), P = planned (later/infra first).
+
+### A. Core & meta - 12
+
+- [L] `/ping` - gateway latency + uptime
+- [L] `/help` - THE hub: categories + pagination + autocomplete search
+- [L] `/botinfo` - uptime, RAM (RSS/heap), guilds, node
+- [N] `/uptime` - uptime + restart history
+- [N] `/stats` - command usage stats (from DB counter)
+- [N] `/invite` - bot invite link + permissions summary
+- [N] `/support` - support server + docs links
+- [N] `/changelog` - latest changelog entries
+- [N] `/privacy` - what data Mem stores + deletion flow
+- [N] `/terms` - usage terms
+- [P] `/feedback` - modal -> support/GitHub issue
+- [P] `/vote` - top.gg voting reminder + rewards hook
+
+### B. Moderation - 34
+
+- [L] `/warn` - case-numbered warning
+- [L] `/warnings` - list active warnings
+- [L] `/removewarn` - clear active warnings
+- [L] `/timeout` - timeout member
+- [L] `/mute` - alias of timeout
+- [L] `/untimeout` - remove timeout
+- [L] `/unmute` - alias
+- [L] `/kick` - kick with case
+- [L] `/ban` - ban with case
+- [L] `/unban` - unban by ID
+- [L] `/purge` - bulk delete w/ filters
+- [L] `/slowmode` - channel slowmode
+- [L] `/case view` - lookup case by number
+- [L] `/case list` - recent cases
+- [N] `/softban` - ban+unban purge pattern
+- [N] `/tempban` - scheduler-backed ban expiry
+- [N] `/unbanall` - bulk unban
+- [N] `/lock` - channel lockdown
+- [N] `/unlock` - lift lockdown
+- [N] `/hide` - hide channel from @everyone
+- [N] `/unhide` - unhide channel
+- [N] `/nuke` - clone channel (reset chat)
+- [N] `/note add` - private staff note on member
+- [N] `/notes` - list staff notes
+- [N] `/history` - full case history for a member
+- [N] `/raidmode` - one-switch raid lockdown
+- [N] `/voicemute` - server-mute member
+- [N] `/voicedeafen` - server-deafen member
+- [N] `/voicekick` - disconnect from voice
+- [N] `/move` - move member to channel
+- [N] `/moveall` - move all voice members
+- [N] `/inrole` - list members with a role
+- [P] `/jail` - quarantine role + channel
+- [P] `/unjail` - release from quarantine
+
+### C. Logging & audit - 9
+
+- [L] `/logchannel` - set/off/status + event feed
+- [N] `/logs events` - toggle event categories
+- [N] `/logs recent` - recent events from DB log
+- [N] `/snipe` - last deleted message
+- [N] `/editsnipe` - last edited message
+- [N] `/audit recent` - human-readable audit log reader
+- [N] `/audit user` - audit entries for a user
+- [P] `/logs export` - CSV/JSON export
+- [P] `/logs ignore` - channel/role filters
+
+### D. Welcome & growth - 16
+
+- [L] `/welcome` - set/off/test + placeholders
+- [N] `/goodbye` - leave messages
+- [N] `/autorole` - add/remove/list auto roles
+- [N] `/invites list` - who invited a member
+- [N] `/invites codes` - all active codes + uses
+- [N] `/invites rewards` - invite-count role rewards
+- [N] `/boosterrole` - self-serve booster role
+- [N] `/boosters` - list active boosters
+- [N] `/onboarding intro` - DM welcome toggle + copy
+- [N] `/joingate` - account-age gate + kick
+- [N] `/greet dm` - DM greeting
+- [N] `/stickyroles` - reapply roles on rejoin
+- [P] `/growth stats` - joins/leaves trends
+- [P] `/milestones` - member milestone announcements
+- [P] `/vanity` - vanity URL tracking
+- [P] `/birthdays` - birthday announcements
+
+### E. Roles & menus - 17
+
+- [L] `/reactionrole create` - select-menu role panel
+- [L] `/reactionrole add` - add panel entry (emoji/role)
+- [L] `/reactionrole remove` - remove entry
+- [L] `/reactionrole list` - list panels
+- [L] `/role add` - give role (hierarchy-safe)
+- [L] `/role remove` - take role
+- [N] `/role all add` - give role to everyone
+- [N] `/role all remove` - remove from everyone
+- [N] `/role create` - create role
+- [N] `/role delete` - delete role
+- [N] `/role rename` - rename role
+- [N] `/role color` - recolor role
+- [N] `/role icon` - set role icon
+- [N] `/roleinfo` - role details + member count
+- [N] `/selfrole` - build button/select role menus
+- [N] `/temp role` - scheduler-backed temporary roles
+- [P] `/role request` - request/approval flow
+
+### F. Utility & info - 22
+
+- [L] `/serverinfo` - server overview
+- [L] `/userinfo` - user/member overview
+- [L] `/avatar` - avatar (+guild avatar)
+- [L] `/membercount` - human count
+- [L] `/servericon` - server icon
+- [L] `/serverstats` - cached counts (channels/roles/emojis/boosts)
+- [N] `/banner` - user banner
+- [N] `/serverbanner` - server banner
+- [N] `/channelinfo` - channel details + perms summary
+- [N] `/threadinfo` - thread details
+- [N] `/emoji info` - emoji details
+- [N] `/emoji list` - server emojis
+- [N] `/sticker info` - sticker details
+- [N] `/color` - color preview from hex
+- [N] `/snowflake` - timestamp from any ID
+- [N] `/permissions` - effective perms of user in channel
+- [N] `/vcinfo` - voice channel occupants
+- [P] `/time` - timezone converter
+- [P] `/weather` - weather lookup
+- [P] `/define` - dictionary
+- [P] `/convert` - unit conversion
+- [P] `/qr` - QR code generator
+
+### G. Messaging - 12
+
+- [L] `/say` - send as Mem (no-ping)
+- [L] `/announce` - titled embed announcement
+- [L] `/poll` - modal create, live bars, multi, auto-close
+- [N] `/embed` - modal embed builder
+- [N] `/sticky` - sticky message per channel
+- [N] `/remind` - scheduler-backed reminders
+- [N] `/reminders list` - my reminders
+- [N] `/reminder remove` - delete reminder
+- [N] `/autoresponder` - add/remove/list triggers
+- [N] `/quote` - quote a message
+- [P] `/bookmark` - save messages
+- [P] `/tts read` - read message as audio
+
+### H. Fun & social - 31
+
+- [N] `/8ball` - classic magic 8-ball
+- [N] `/roll` - dice roll (NdM)
+- [N] `/dice` - full dice set
+- [N] `/coinflip` - heads or tails
+- [N] `/choose` - let Mem pick
+- [N] `/ship` - compatibility fun
+- [N] `/rate` - x/10 rating
+- [N] `/hug` - anime-style action GIF
+- [N] `/pat` - action GIF
+- [N] `/slap` - action GIF
+- [N] `/kiss` - action GIF
+- [N] `/cuddle` - action GIF
+- [N] `/meme` - meme from API
+- [N] `/joke` - random joke
+- [N] `/fact` - random fact
+- [N] `/inspire` - motivational quote
+- [N] `/would-you-rather` - WYR question
+- [N] `/truth-or-dare` - classic game
+- [N] `/trivia` - start/stop/leaderboard
+- [N] `/rps` - rock-paper-scissors vs Mem
+- [N] `/tictactoe` - buttons game vs Mem
+- [N] `/connect4` - buttons game
+- [N] `/hangman` - word game
+- [N] `/wordle` - daily word game
+- [N] `/scramble` - word scramble
+- [N] `/slots` - casino fun (fake fake)
+- [N] `/blackjack` - cards vs Mem
+- [N] `/roulette` - spin
+- [N] `/highlow` - card guessing
+- [N] `/pokedex` - pokemon lookup (API)
+- [P] `/anime` - anime/manga lookup
+
+### I. Feeds & notifications - 8
+
+- [N] `/youtube` - add/remove/list channel feeds
+- [N] `/twitch` - add/remove/list
+- [N] `/rss` - add/remove/list
+- [N] `/reddit` - add/remove/list
+- [N] `/steam deals` - deals feed
+- [N] `/freegames` - free game alerts
+- [P] `/x relay` - X/twitter relay
+- [P] `/github feed` - repo events feed
+
+### J. Reputation - 4
+
+- [N] `/rep give` - give reputation point
+- [N] `/rep check` - view reputation
+- [N] `/rep leaderboard` - top reputations
+- [N] `/rep reset` - admin reset
+
+### K. Leveling - 11
+
+- [N] `/rank` - xp card + progress
+- [N] `/leaderboard` - top members
+- [N] `/level config` - enable/rate/announce channel
+- [N] `/xp add` - grant xp
+- [N] `/xp remove` - remove xp
+- [N] `/xp set` - set exact xp/level
+- [N] `/level rewards add` - role reward at level
+- [N] `/level rewards remove` - remove reward
+- [N] `/level rewards list` - list rewards
+- [N] `/xp multiplier` - role/channel multipliers
+- [P] `/level card` - custom rank card setup
+
+### L. Giveaways - 5
+
+- [N] `/giveaway start` - button-entry giveaway
+- [N] `/giveaway end` - end early
+- [N] `/giveaway reroll` - pick new winner
+- [N] `/giveaway list` - active giveaways
+- [N] `/giveaway delete` - remove giveaway
+
+### M. Tickets - 9
+
+- [N] `/ticket panel` - post setup panel (button)
+- [N] `/ticket open` - open ticket (threads)
+- [N] `/ticket close` - close + transcript
+- [N] `/ticket claim` - claim as staff
+- [N] `/ticket add` - add member to ticket
+- [N] `/ticket remove` - remove member
+- [N] `/ticket rename` - rename ticket
+- [N] `/ticket transcript` - save transcript
+- [P] `/ticket categories` - multi-panel routing
+
+### N. Temp voice - 8
+
+- [N] `/voice hub` - join-to-create setup
+- [N] `/voice lock` - lock my channel
+- [N] `/voice unlock` - unlock
+- [N] `/voice limit` - user limit
+- [N] `/voice rename` - rename
+- [N] `/voice kick` - kick from my channel
+- [N] `/voice claim` - take ownership
+- [P] `/voice ban` - ban from my channel
+
+### O. Starboard - 4
+
+- [N] `/starboard set` - channel + star threshold
+- [N] `/starboard off` - disable
+- [N] `/starboard show` - stats
+- [P] `/starboard ignore` - exempt channels/roles
+
+### P. Tags & custom commands - 9
+
+- [N] `/tag create` - store named snippet
+- [N] `/tag edit` - edit
+- [N] `/tag delete` - delete
+- [N] `/tag info` - tag details
+- [N] `/tag list` - tags by owner
+- [N] `/tags` - all server tags
+- [N] `/customcmd add` - trigger -> response
+- [N] `/customcmd remove` - remove
+- [N] `/customcmd list` - list
+
+### Q. Automod & security - 13
+
+- [N] `/automod enable` - turn on native AutoMod rules
+- [N] `/automod disable` - off
+- [N] `/automod status` - current rules
+- [N] `/automod rules` - links/invites/spam/caps/mentions
+- [N] `/filter words` - word blocklist add/remove/list
+- [N] `/antinuke config` - anti-nuke thresholds + actions
+- [N] `/antinuke trust` - trusted users/bots
+- [N] `/antiraid config` - raid triggers
+- [N] `/verification setup` - gate button + role
+- [N] `/quarantine` - quarantine member
+- [N] `/unquarantine` - release
+- [P] `/whitelist` - trusted bots immune from antinuke
+- [P] `/backup` - server template create/load
+
+### R. AI (BYO endpoint) - 9
+
+- [N] `/ai ask` - one-shot question
+- [N] `/ai config` - endpoint/model/persona per guild
+- [N] `/ai chat` - channel chat mode
+- [N] `/ai summarize` - summarize message/thread
+- [N] `/ai image` - image generation
+- [N] `/ai translate` - translate text
+- [N] `/ai moderate` - AI-assisted mod review
+- [P] `/ai lore` - persona/lorebook management
+- [P] `/ai voice` - TTS in voice (spike)
+
+### S. Music (Lavalink, phase 3+) - 12
+
+- [P] `/play` - join + play
+- [P] `/skip` - skip track
+- [P] `/stop` - stop + leave
+- [P] `/queue` - show queue
+- [P] `/nowplaying` - current track
+- [P] `/loop` - loop modes
+- [P] `/shuffle` - shuffle queue
+- [P] `/volume` - volume
+- [P] `/seek` - seek
+- [P] `/filter` - audio filters
+- [P] `/lyrics` - lyrics lookup
+- [P] `/join/leave` - manual join/leave
+
+### T. Importers - 5
+
+- [N] `/import mee6` - import MEE6 levels
+- [N] `/import carl` - import Carl tags/roles
+- [N] `/import dyno` - import Dyno settings
+- [N] `/import config` - generic JSON import
+- [P] `/export data` - full data export
+
+### U. Settings & command management - 11
+
+- [N] `/settings view` - guild settings overview
+- [N] `/settings edit` - module config editor
+- [N] `/module enable` - turn modules on
+- [N] `/module disable` - turn modules off
+- [N] `/command disable` - disable command in channel/role
+- [N] `/command enable` - re-enable
+- [N] `/locale set` - language (i18n-ready)
+- [N] `/timezone set` - guild timezone
+- [N] `/commandperms` - default permissions per command
+- [P] `/prefix` - legacy prefix mode (self-host only)
+- [P] `/maintenance` - owner-only maintenance mode
+
+### V. Analytics - 6
+
+- [N] `/stats activity` - server activity trends
+- [N] `/stats channels` - busiest channels
+- [N] `/stats members` - growth/retention flow
+- [N] `/stats commands` - command usage
+- [P] `/stats voice` - voice time leaderboard
+- [P] `/stats export` - export analytics
+
+### W. Context menus (M) - 14
+
+- [N] `/Warn user` - user menu
+- [N] `/Timeout user` - user menu
+- [N] `/Kick user` - user menu
+- [N] `/Ban user` - user menu
+- [N] `/User info` - user menu
+- [N] `/Avatar` - user menu
+- [N] `/Rep give` - user menu
+- [N] `/Translate message` - message menu
+- [N] `/Quote message` - message menu
+- [N] `/Report message` - message menu
+- [N] `/Pin message` - message menu
+- [N] `/AI summarize` - message menu
+- [N] `/Bookmark message` - message menu
+- [N] `/Purge to here` - message menu
+
+### X. Extras - 8
+
+- [N] `/afk` - set/clear afk + auto-reply
+- [N] `/firstmessage` - oldest message in channel
+- [N] `/urban` - urban dictionary
+- [N] `/emoji steal` - clone emoji to server
+- [N] `/countdown` - scheduler countdown
+- [P] `/goal` - server goals with progress bars
+- [P] `/bigemoji` - enlarge emoji
+- [P] `/screenshot` - website screenshot
+
+
+### Y. Economy (planned module) - 8
+
+- [P] `/balance` - wallet + bank
+- [P] `/daily` - daily reward streak
+- [P] `/work` - timed earn
+- [P] `/pay` - transfer to user
+- [P] `/shop buy` - buy roles/items
+- [P] `/inventory` - owned items
+- [P] `/eco leaderboard` - richest members
+- [P] `/beg` - desperate earnings
+
+### Z. Suggestions & modmail - 7
+
+- [N] `/suggest` - post suggestion (voting buttons)
+- [N] `/suggestion setup` - channel + workflow config
+- [N] `/suggestion approve` - staff decision + status
+- [N] `/suggestion deny` - staff decision + status
+- [N] `/modmail setup` - modmail category config
+- [N] `/modmail reply` - reply as staff
+- [N] `/modmail close` - close thread
+
+### AA. Extra commands - 15
+
+- [N] `/banlist` - list banned users
+- [N] `/modstats` - moderator activity stats
+- [N] `/roles` - list all server roles
+- [N] `/channels` - list channels by category
+- [N] `/bots` - list server bots
+- [N] `/nickname set` - change nickname
+- [N] `/nickname reset` - reset nickname
+- [N] `/topic` - conversation starter
+- [N] `/roast` - playful roast
+- [N] `/compliment` - wholesome compliment
+- [N] `/never-have-i-ever` - group game
+- [N] `/most-likely` - group game
+- [N] `/minesweeper` - buttons game
+- [P] `/shard` - shard/process info
+- [P] `/dm` - DM a user as Mem (staff)
+
+## 7.6 Build order (sprint runs)
+
+1. Quick wins + kernel + nav + poll + reaction roles - SHIPPED.
+2. **Scheduler service** (DB-backed jobs) -> unlocks: tempban, temp roles, remind, countdown, giveaway endings, sticky refresh.
+3. Leveling (rank/leaderboard/rewards) -> reputation -> analytics lite.
+4. Tickets (threads + panels) -> temp voice -> starboard.
+5. Automod + antinuke/antiraid + verification -> quarantine/jail.
+6. Feeds (youtube/twitch/rss/reddit) -> fun pack (games + GIFs) -> AI module.
+7. Importers -> settings/command management -> context menus batch.
+8. Music (Lavalink) -> Activities 3D spike research.
+
