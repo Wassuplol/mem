@@ -42,6 +42,9 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "$URL" main
 - For raw SQL in bash, use a quoted heredoc piped to `docker exec -i ... psql` - avoid escaped-quote -c strings.
 - Root `.env` is filled EXCEPT `DISCORD_TOKEN` (empty - paste the real Mem bot token before the bot can run; login/dashboard + REST probes work without it). NEVER commit or print secrets. Shell's DISCORD_TOKEN = Hermes's own bot - always `env -u DISCORD_TOKEN` for bot tests. `auth-smoke` is an INTEGRATION probe: it needs the web app UP on :3000 (`pnpm --filter @mem/web start`) - an ECONNREFUSED there means 'server not running', not a code failure.
 - Automation Chrome (CDP 9222) may run; leave it alone.
+- **THE BOT IS LIVE** (2026-10-07 ~19:20): `Mem#1900` running locally, 31 commands registered in 'Professional Community'. Boot cmd: `cd /c/Users/dodia/mem && env -u DISCORD_TOKEN pnpm --filter @mem/bot exec tsx src/index.ts` (background). `env -u` is REQUIRED (shell's DISCORD_TOKEN would shadow .env).
+- Docker Desktop can stop on its own (engine pipe vanishes): relaunch `cmd /c start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"`, wait for `docker info`, then `docker start mem-postgres-1 mem-redis-1`.
+- pg pool background errors are now handled in createDb (`pool.on('error')`) - a DB blip must never crash the bot again.
 - Next 16 `cacheComponents`: dynamic pages need `await connection()` inside a `<Suspense>` boundary (route handlers are fine).
 - `git ls-remote` can hang past timeout on this box (network/GCM); the push itself works. To verify a push landed, use the API instead: `curl -s -H "Authorization: Bearer $MCP_GITHUB_API_KEY" https://api.github.com/repos/Wassuplol/mem/git/ref/heads/main` and compare the sha.
 
@@ -71,6 +74,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "$URL" main
 - Target < 200 MB RSS with a handful of guilds; commands are thin wrappers, heavy logic lives in shared services so the dashboard API can reuse it. Verify via /botinfo once the real bot runs.
 
 ## Run log
+- Run 6.5 (live, ~19:10-19:25): MEM BOOTED FOR REAL - first live boot caught a wrong-app token (Nihil) + a crash-on-DB-blip bug (fixed: pool error handler, commit pushed); Docker stack relaunched; bot online as Mem#1900 with 31 guild commands.
 - Run 5 (cron, ~18:32-18:55): /reminder set|list|remove - duration parser (10s-365d), 10-pending cap, autocomplete picker on remove; 30s delivery scan (batch 25, channel->DM fallback, marks-sent, hourly purge of 30d-old sent rows); reminders table + 8 services (migration 0005 applied); typecheck + reminder-smoke + boot smoke green (31 cmds / 7 events / 3 components / 9 modules). Run 4.5's staged docs state resolved itself mid-run (sibling committed+pushed fc7e314) - nothing to rescue.
 - Run 6 (cron, ~18:53-19:05): WRAP-UP run. Final verification at dd8cd78: `pnpm -r typecheck` OK (4/4 pkgs); ALL 5 db smokes green (auth-smoke PASS end-to-end with web up: signed cookie -> /api/auth/get-session -> user resolved; server stopped after); boot smoke `31 command(s), 7 event(s), 3 component handler(s) across 9 module(s)`; remote main sha == local. Comprehensive owner report + 'when you're home' checklist posted. Next up (build order #2): generic scheduler service -> tempban/temp roles/countdown.
 - Run 4.5 (live, ~18:18-18:30): catalog section 7 - 300+ master plan (319 targets, slot math, navigation, tutorial, platform-squeeze, build order). Timer paused during this live chunk.
