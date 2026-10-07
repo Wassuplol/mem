@@ -1,6 +1,6 @@
-# MASTER PLAN — v0.2 *(draft, pending final research digest)*
+# MASTER PLAN — v0.3 *(research digested — P1 underway)*
 
-**Working title:** **Mem** (owner pick — rename wave pending) · **Date:** 2026-10-07 · **Status:** pre-synthesis
+**Working title:** **Mem** (renamed; repo github.com/Wassuplol/mem) · **Date:** 2026-10-07 · **Status:** P1 — foundation (scaffold in place)
 
 > One-liner: The community-management Discord bot done right — Red-style modularity + a first-class web dashboard + everything free + a modern, maintained stack. *Your server's memory.*
 
@@ -12,7 +12,7 @@
 - **vs Wick:** security suite included (anti-nuke with rollback, anti-raid, verification) — not a subscription.
 - **vs YAGPDB:** visual configuration for everything; no arcane command syntax to memorize.
 - **vs Red-DiscordBot:** we have a real dashboard, a maintained modern stack, and a plugin SDK that can ship UI.
-- **Openness:** source-available — anyone can clone/use/modify with visible credit; no monetized clones. Exact license: research report #4.
+- **Openness:** source-available — anyone can clone/use/modify with visible credit; no monetized clones. Proposed license: FSL-1.1-MIT (+ trademark) — `research/04`.
 
 ## 2. Principles
 
@@ -27,7 +27,7 @@
 
 - **Language:** TypeScript end-to-end
 - **Bot:** discord.js v14 (latest stable; v15 when stable), on a custom kernel layer
-- **Web:** Next.js 16 + Tailwind + shadcn/ui
+- **Web:** Next.js 16 + Tailwind + shadcn/ui + Better Auth · SSE for realtime
 - **Data:** PostgreSQL (source of truth) + Redis (cache, BullMQ queues, pub/sub for realtime)
 - **AI:** bring-your-own OpenAI-compatible endpoint (base URL + key + model per guild) — chat, summaries, mod-assist; local models (Ollama, LM Studio) work
 - **Assets & branding:** UI icons = Lucide · original SVG brand pack in-repo · open-license emoji sets · user uploads → R2 · `CREDITS.md` tracks third-party assets
@@ -39,7 +39,7 @@
 
 - **bot process:** gateway connection + interaction handling; module loader; per-guild config served from Postgres, cached in Redis.
 - **worker process:** BullMQ jobs — ticket transcripts, image rendering (welcome cards), scheduled sends, giveaways, AI jobs.
-- **web process:** OAuth2 (identify + guilds) dashboard; API; WebSocket for live logs/stats; Discord permissions checked per request.
+- **web process:** OAuth2 (identify + guilds) dashboard; API; live streams via SSE; Discord permissions checked per request.
 - **Event flow:** gateway → kernel → module handlers; heavy side effects queued; UI state updates via Redis pub/sub.
 - **Module contract (sketch):**
 
@@ -56,7 +56,7 @@ export interface ModuleManifest {
 }
 ```
 
-- **Sharding:** deferred — single process first; shard when needed (research #3 refines thresholds).
+- **Sharding:** deferred — single process first; shard when needed (~2,500 guilds per Discord policy).
 
 ## 5. Modules (v1 targets — all free)
 
@@ -69,24 +69,23 @@ Servers list → Modules (cards with status + quick toggle) · per-module config
 ## 7. Roadmap
 
 - ✅ **P0 — Decisions locked** (stack, dashboard-first, all-free, license intent, name)
-- 🔜 **P1 — Foundation:** repo scaffold, core kernel (commands, events, config, module loader), Docker Compose dev env, dashboard skeleton + OAuth + server list, CI. *Done = a test module works end-to-end through the dashboard.*
+- 🔜 **P1 — Foundation (in progress):** scaffold landed 2026-10-07 — pnpm workspace, `@mem/core` kernel, bot skeleton + `/ping`, Docker Compose (pg + redis), CI (typecheck green). Remaining: dashboard skeleton + OAuth login. *Done = a test module works end-to-end through the dashboard.*
 - **P2 — MVP:** moderation, logging, reaction roles, welcome, automod v1 + dashboard config for each. *Done = daily-driver usable on a real server.*
 - **P3 — Community:** leveling, tickets, modmail, custom commands, polls, embed builder.
 - **P4 — Security:** anti-nuke rollback, anti-raid, verification, phishing detection.
 - **P5 — Plugins & extras:** module SDK docs + example plugin, music, AI, docs site, i18n.
-- **P6 — Hosted mode:** optional public bot + SaaS, migration importers (MEE6/Carl), launch checklist.
+- **P6 — Hosted mode:** optional public bot + SaaS, migration importers (MEE6/Carl/Dyno), launch checklist.
 
 ## 8. Open items
 
-1. License pick — 2–3 options + recommendation (report #4)
-2. Name rename wave (Mem): GitHub org + domain checks (report #6 list as backup options)
-3. Plugin sandboxing level (report #2)
-4. Sharding/scale details, message-content intent strategy (report #3)
-5. Dashboard kit + UX patterns (report #5)
-6. SQLite "lite mode" for tiny hosts? (P5; Postgres stays default)
+1. **License nod from owner** — FSL-1.1-MIT + trademark (rec) vs PolyForm NC (runner-up)
+2. **P1 remainder** — dashboard skeleton (Next.js + Better Auth + shadcn), OAuth login, first UI
+3. Plugin sandboxing choice — P5
+4. SQLite "lite mode" — P5 decision (Postgres stays default)
 
 ## 9. Artifacts
 
-- Repo: github.com/Wassuplol/sonion (private; rename to `mem` pending)
-- `research/01..06` — six research reports (~150KB)
-- `docs/DECISIONS.md` — locked calls · `docs/MASTER-PLAN.md` — this file
+- Repo: github.com/Wassuplol/mem (private) · local: `C:\Users\dodia\mem`
+- `research/01..06` — six research reports (~150KB) ✔
+- `docs/DECISIONS.md` · `docs/MASTER-PLAN.md` (this file)
+- `apps/` + `packages/` — P1 scaffold (typecheck green)

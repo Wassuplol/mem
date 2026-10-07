@@ -2,29 +2,37 @@
 
 A next-generation community-management Discord bot — **your server's memory** 🧠 — Red-DiscordBot-style modularity + an integrated web dashboard + zero paywalls.
 
-> Goal: beat the field — MEE6 · Dyno · Carl-bot · Wick · YAGPDB
+> Goal: beat the field — MEE6 · Dyno · Carl-bot · Wick · YAGPDB. See [`research/`](research/) for the receipts.
 
-*(Name: **Mem** — owner pick 2026-10-07. Repo/folder rename wave in progress; some paths may still say "sonion".)*
+*(Bootstrapped under the codename "sonion" on 2026-10-07; renamed to **Mem** the same day.)*
 
-## Core decisions (locked 2026-10-07)
-- **TypeScript** end-to-end · bot on **discord.js** · dashboard on **Next.js**
+## Core decisions (locked)
+- **TypeScript** end-to-end · **discord.js** bot · **Next.js** dashboard
 - **PostgreSQL + Redis** · **pnpm monorepo** (`apps/bot`, `apps/web`, `packages/core`)
-- **One-command self-host** (Docker Compose, local use) *and* optional cloud hosting
+- **One-command self-host** (Docker Compose) *and* optional cloud hosting
 - **Plugin system** — community modules can ship their own dashboard pages
 - **AI built-in** — bring-your-own OpenAI-compatible endpoint (chat, summaries, mod-assist)
 - **Everything free** — no paywalled core features, ever
-- **License intent:** clone freely with visible credit; **no monetized clones** (full independent rewrites always allowed). Exact license TBD.
+- **License (proposed):** FSL-1.1-MIT + trademark — clone freely with credit; no monetized clones; every release becomes MIT after 2 years
 - **Branding:** UI icons = Lucide; original SVG brand pack in-repo; open-license emoji sets; user uploads → Cloudflare R2
 
 ## Status
-🚧 **Research phase wrapping** — six research reports live in [`research/`](research/). Master plan in [`docs/MASTER-PLAN.md`](docs/MASTER-PLAN.md).
+🛠️ **P1 — foundation scaffold:** `@mem/core` kernel (module contract + registry), bot skeleton with a working `/ping` module, Docker Compose (Postgres 18 + Redis 8), CI with typecheck. Six research reports in [`research/`](research/); master plan in [`docs/MASTER-PLAN.md`](docs/MASTER-PLAN.md).
 
-## Planned layout
+## Quick start
+```bash
+pnpm install
+cp .env.example .env   # fill in DISCORD_TOKEN + DISCORD_APP_ID
+pnpm infra:up          # Postgres + Redis via Docker
+pnpm dev:bot           # bot login (+ instant /ping in your dev guild)
+```
+
+## Layout
 ```
 apps/bot        # Discord bot (discord.js, TypeScript)
-apps/web        # Web dashboard (Next.js)
-packages/core   # Plugin kernel, shared types
-packages/db     # Schema + migrations
-research/       # Research reports (01..06)
-docs/           # Plans, specs, decisions
+apps/web        # Web dashboard (Next.js) — P1 next
+packages/core   # kernel: module contract, registry, shared types
+packages/db     # schema + migrations — P2
+research/       # 6 research reports (2026-10-07)
+docs/           # DECISIONS.md · MASTER-PLAN.md
 ```
