@@ -1,7 +1,7 @@
-import { GuildMember, SlashCommandBuilder } from "discord.js";
+import { GuildMember, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { defineModule } from "@mem/core";
 import { COLORS, embed } from "../lib/embed";
-import { ensureGuild } from "../lib/permissions";
+import { ensureGuild, requirePermissions } from "../lib/permissions";
 
 function formatUptime(seconds: number): string {
   const d = Math.floor(seconds / 86400);
@@ -131,6 +131,47 @@ export const utilityModule = defineModule({
             ),
           ],
         });
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
+        .setName("say")
+        .setDescription("Send a message as Mem.")
+        .addStringOption((o) => o.setName("message").setDescription("What to say").setRequired(true).setMaxLength(2000))
+        .addChannelOption((o) => o.setName("channel").setDescription("Target channel (default: current)")),
+      async execute(interaction) {
+        const i = await ensureGuild(interaction);
+        if (!(await requirePermissions(i, PermissionFlagsBits.ManageMessages))) return;
+        const target = i.options.getChannel("channel") ?? i.channel;
+        if (!target?.isSendable()) {
+          await i.reply({ content: "I cannot send messages in that channel.", flags: 64 });
+          return;
+        }
+        await target.send({ content: i.options.getString("message", true), allowedMentions: { parse: [] } });
+        await i.reply({ content: `Sent to <#${target.id}>.`, flags: 64 });
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
+        .setName("announce")
+        .setDescription("Post an announcement embed.")
+        .addChannelOption((o) => o.setName("channel").setDescription("Where to announce").setRequired(true))
+        .addStringOption((o) => o.setName("message").setDescription("Announcement body").setRequired(true).setMaxLength(4000))
+        .addStringOption((o) => o.setName("title").setDescription("Optional title").setMaxLength(256)),
+      async execute(interaction) {
+        const i = await ensureGuild(interaction);
+        if (!(await requirePermissions(i, PermissionFlagsBits.ManageMessages))) return;
+        const channel = i.options.getChannel("channel", true);
+        if (!channel.isSendable()) {
+          await i.reply({ content: "I cannot send messages in that channel.", flags: 64 });
+          return;
+        }
+        const builder = embed({ color: COLORS.brand, description: i.options.getString("message", true) });
+        const title = i.options.getString("title");
+        if (title) builder.setTitle(title);
+        builder.setFooter({ text: `Announcement by ${i.user.username}` });
+        await channel.send({ embeds: [builder], allowedMentions: { parse: [] } });
+        await i.reply({ content: `Announcement posted in <#${channel.id}>.`, flags: 64 });
       },
     },
     {

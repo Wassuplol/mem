@@ -40,17 +40,17 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 ## What already exists (do not rebuild)
 - Kernel `@mem/core`: defineModule, ModuleRegistry (commands + EVENTS), tests 5/5.
 - DB `@mem/db`: guilds, guild_settings, mod_cases, auth tables; services (ensureGuild, get/setModuleConfig, createCase, listActiveWarnings, clearActiveWarnings); smokes (auth-smoke, mod-smoke).
-- Bot apps/bot: 22 commands, 5 modules, 6 events. Modules: ping, moderation (warn, warnings, removewarn, timeout, mute, untimeout, unmute, kick, ban, unban, purge, slowmode), utility (serverinfo, userinfo, avatar, membercount, servericon, botinfo, help), logging (ban/unban/message-delete/member-add-remove events + /logchannel), welcome (member-join event + /welcome set/off/test).
+- Bot apps/bot: 24 commands, 5 modules, 6 events. Modules: ping, moderation (warn, warnings, removewarn, timeout, mute, untimeout, unmute, kick, ban, unban, purge, slowmode), utility (serverinfo, userinfo, avatar, membercount, servericon, botinfo, help, say, announce), logging (ban/unban/message-delete/member-add-remove events + /logchannel), welcome (member-join event + /welcome set/off/test).
 - RAM discipline: no message/presence/reaction caches; member/user caches capped at 100; partials for events; nothing grows in memory.
 - Web apps/web: Better Auth live, `/api/guilds` route (session -> account access token -> discord.com/users/@me/guilds -> filter MANAGE_GUILD), `/servers` page, dashboard shell + Servers link. Verified: 401 no-session / 409 no-token / 401 discord_token_expired (real outbound call).
 - Server Members intent is OPTIONAL via `ENABLE_MEMBERS_INTENT=1` (also toggle in Dev Portal). Off by default so login never breaks.
 
 ## Backlog (priority order)
-- [ ] Command-catalog research (owner request): scan web fun-bots + Red community cog repos for reference; produce docs/COMMAND-CATALOG.md - target ~100 first-party commands using subcommand families (Discord caps top-level at 100/scope; families + plugins are how bots exceed it) + fun-module command families (trivia/gifs/games/utility APIs).
-- [ ] More utility/mod commands (pick 2-4 per run): `/poll` (2-10 buttons), `/say` (ManageMessages echo), `/announce` (embed), `/role add|remove user role` (ManageRoles), `/pin`, `/slowmode` exists, `/serverstats` (member/goal counts), `/case lookup` (case by number).
+- [x] Command-catalog research (owner request): DONE 2026-10-07 - docs/COMMAND-CATALOG.md: ~100 top-level targets across 21 families, Discord-cap + families/per-guild/plugins strategy, receipts (Red cogs, Carl, Dyno, YAGPDB, MEE6, Wick, fun-bots).
+- [ ] More utility/mod commands (pick 2-4 per run): ✅ /say + /announce shipped (run 1). Remaining: /poll (needs kernel component hook), /role add|remove user role (ManageRoles), /pin, /serverstats (member/goal counts), /case lookup (case by number).
 - [ ] Reaction roles v1 - needs button/select handling (component interactions); kernel may need a components hook. Design first, then `/reactionrole create|add|remove|list`.
 - [ ] Dashboard: per-server page `/servers/[id]` using /api/guilds data + module cards reading guild_settings via a new `/api/guilds/[id]/settings` route (session -> verify user manages that guild!).
-- [ ] README + DECISIONS update: command list (22), events, API routes, RAM targets, "HTTP interactions / serverless command mode" as a documented future deployment option.
+- [ ] README + DECISIONS update: command list (24), events, API routes, RAM targets, "HTTP interactions / serverless command mode" as a documented future deployment option.
 - [ ] Perf: when the real bot token lands, run the bot, hit /botinfo, record RSS numbers in README.
 - [ ] Later phases (P3): leveling, tickets, temp-voice, starboard, tags, importers (MEE6/Carl/Dyno XP), AI module (BYO OpenAI-compatible endpoint), music (Lavalink).
 
@@ -60,3 +60,4 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 ## Run log
 - Run 0 (live, ~15:20-16:00): mod_cases + services + migration; moderation x9 + utility x7 suites; RAM cache config; auth-smoke + mod-smoke.
 - Run 0.5 (live, ~16:00-16:50): kernel events; logging + welcome modules (events + commands); removewarn/mute/unmute; /api/guilds + /servers page (verified full chain: 401 -> 409 -> 401 discord_token_expired); ops notes above.
+- Run 1 (cron, ~16:27-17:00): docs/COMMAND-CATALOG.md (100-cmd target = 24 live / 65 next / 11 planned; Discord-cap + families/per-guild/plugins strategy; receipts); /say + /announce shipped in utility (24 cmds total; typecheck + boot smoke green: "24 command(s) across 5 module(s)"); fixed push-recipe line.
