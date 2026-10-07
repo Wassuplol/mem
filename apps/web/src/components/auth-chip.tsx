@@ -4,6 +4,12 @@ import { LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { SignInButton } from "./sign-in-button";
 
+/** First real letter/digit of a name (skips decorative glyphs like ◤). */
+function initialOf(name: string): string {
+  const match = name.match(/[\p{L}\p{N}]/u);
+  return (match?.[0] ?? "?").toUpperCase();
+}
+
 /** Shows the current session in the header (or a Sign in button). */
 export function AuthChip() {
   const { data, isPending } = authClient.useSession();
@@ -24,8 +30,18 @@ export function AuthChip() {
   const name = data.user.name ?? "friend";
   return (
     <span className="group flex items-center gap-2.5 rounded-full border border-emerald-400/25 bg-emerald-400/[0.06] py-1 pl-1 pr-2.5 text-xs">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 text-[11px] font-bold text-white">
-        {name.slice(0, 1).toUpperCase()}
+      <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 text-[11px] font-bold text-white">
+        {data.user.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={data.user.image}
+            alt=""
+            className="h-full w-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          initialOf(name)
+        )}
       </span>
       <span className="max-w-[120px] truncate text-emerald-200">{name}</span>
       <button
