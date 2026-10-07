@@ -100,6 +100,28 @@ export function createServices(db: Db) {
         .returning({ id: modCases.id });
       return rows.length;
     },
+
+    async getCaseByNumber(guildId: string, caseNumber: number): Promise<ModCase | null> {
+      const rows = await db
+        .select()
+        .from(modCases)
+        .where(and(eq(modCases.guildId, guildId), eq(modCases.caseNumber, caseNumber)))
+        .limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Newest-first slice of a guild's cases, optionally for one target. */
+    async listCases(guildId: string, opts: { targetId?: string; limit?: number } = {}): Promise<ModCase[]> {
+      const where = opts.targetId
+        ? and(eq(modCases.guildId, guildId), eq(modCases.targetId, opts.targetId))
+        : eq(modCases.guildId, guildId);
+      return db
+        .select()
+        .from(modCases)
+        .where(where)
+        .orderBy(desc(modCases.caseNumber))
+        .limit(Math.min(Math.max(opts.limit ?? 10, 1), 25));
+    },
   };
 }
 

@@ -1,4 +1,4 @@
-import { GuildMember, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { ChannelType, GuildMember, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { defineModule } from "@mem/core";
 import { COLORS, embed } from "../lib/embed";
 import { ensureGuild, requirePermissions } from "../lib/permissions";
@@ -172,6 +172,40 @@ export const utilityModule = defineModule({
         builder.setFooter({ text: `Announcement by ${i.user.username}` });
         await channel.send({ embeds: [builder], allowedMentions: { parse: [] } });
         await i.reply({ content: `Announcement posted in <#${channel.id}>.`, flags: 64 });
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
+        .setName("serverstats")
+        .setDescription("Detailed stats for this server (RAM-lean, cached counts)."),
+      async execute(interaction) {
+        const i = await ensureGuild(interaction);
+        const g = i.guild;
+        const channels = g.channels.cache;
+        const text = channels.filter((c) => c.type === ChannelType.GuildText).size;
+        const voice = channels.filter((c) => c.type === ChannelType.GuildVoice).size;
+        const categories = channels.filter((c) => c.type === ChannelType.GuildCategory).size;
+        const forums = channels.filter((c) => c.type === ChannelType.GuildForum).size;
+        const members = g.members.cache;
+        const bots = members.filter((m) => m.user.bot).size;
+        const humans = members.size - bots;
+        const emojis = g.emojis.cache;
+        const animated = emojis.filter((e) => e.animated).size;
+        const VERIFICATION = ["None", "Low", "Medium", "High", "Very High"];
+        await i.reply({
+          embeds: [
+            embed({ title: `Stats - ${g.name}` })
+              .addFields(
+                { name: "Members", value: `${g.memberCount} total\n${humans} cached humans\n${bots} bots`, inline: true },
+                { name: "Channels", value: `${text} text - ${voice} voice\n${categories} categories - ${forums} forum`, inline: true },
+                { name: "Roles", value: `${g.roles.cache.size}`, inline: true },
+                { name: "Emojis", value: `${emojis.size} (${animated} animated)`, inline: true },
+                { name: "Boosts", value: `Tier ${g.premiumTier} - ${g.premiumSubscriptionCount ?? 0} boosts`, inline: true },
+                { name: "Verification", value: VERIFICATION[g.verificationLevel] ?? "none", inline: true },
+              )
+              .setFooter({ text: `ID ${g.id} - created <t:${Math.floor(g.createdTimestamp / 1000)}:R>` }),
+          ],
+        });
       },
     },
   ],

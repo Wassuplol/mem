@@ -36,13 +36,34 @@ console.log("cleared:", cleared);
 const after = await services.listActiveWarnings(G, "42");
 console.log("after clear:", after.length);
 
+const found = await services.getCaseByNumber(G, 2);
+console.log("case lookup #2:", found?.reason);
+const missing = await services.getCaseByNumber(G, 99);
+console.log("case lookup #99:", missing);
+const listAll = await services.listCases(G);
+const listTarget = await services.listCases(G, { targetId: "42", limit: 5 });
+const listNone = await services.listCases(G, { targetId: "7" });
+console.log("listCases all/42/none:", listAll.length, listTarget.length, listNone.length);
+console.log("listCases order:", listAll.map((c) => c.caseNumber).join(","));
+
 // cleanup
 await db.delete(modCases).where(eq(modCases.guildId, G));
 await db.delete(guildSettings).where(eq(guildSettings.guildId, G));
 await db.delete(guilds).where(eq(guilds.id, G));
 
 const pass =
-  cfg?.ok === true && c1.caseNumber === 1 && c2.caseNumber === 2 && warns.length === 2 && cleared === 2 && after.length === 0;
+  cfg?.ok === true &&
+  c1.caseNumber === 1 &&
+  c2.caseNumber === 2 &&
+  warns.length === 2 &&
+  cleared === 2 &&
+  after.length === 0 &&
+  found?.reason === "second" &&
+  missing === null &&
+  listAll.length === 2 &&
+  listTarget.length === 2 &&
+  listNone.length === 0 &&
+  listAll[0]?.caseNumber === 2;
 console.log(pass ? "MOD SMOKE OK" : "MOD SMOKE FAILED");
 if (!pass) process.exitCode = 1;
 await pool.end();

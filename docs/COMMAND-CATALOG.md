@@ -8,7 +8,7 @@ past Discord's command limits — using patterns from the bots we intend to beat
 
 **Status legend:** ✅ live (in `apps/bot`) · 🔜 next (sprint target, shippable in single runs) · 📅 planned (P3+ per `docs/MASTER-PLAN.md`) · 🧩 plugin candidate.
 
-**Coverage: 24 live · 65 next · 11 planned = 100 target.**
+**Coverage: 28 live · 61 next · 11 planned = 100 target.** (live = registered top-level names; subcommand coverage grows within them)
 
 ## 1. The limit problem (and how big bots dodge it)
 
@@ -93,7 +93,7 @@ Engineering gotchas (from builders who hit the wall):
 | `/purge` `/slowmode` | Bulk delete, rate limits | ✅ |
 | `/lock` | sub: channel / server (server = lockdown) | 🔜 |
 | `/softban` | Ban+unban to clear messages | 🔜 |
-| `/case` | sub: view / list / reason / edit — case management | 🔜 |
+| `/case` | v1 live: view / list — reason / edit next | ✅ |
 | `/note` | sub: add / list / remove — mod notes (Dyno parity) | 🔜 |
 | `/modstats` | Per-moderator action counts | 🔜 |
 | `/report` | Member → staff report, routed to mod-log channel | 🔜 |
@@ -121,7 +121,7 @@ Engineering gotchas (from builders who hit the wall):
 
 | Command | Notes | Status |
 | --- | --- | --- |
-| `/role` | sub: add / remove (ManageRoles gate) | 🔜 |
+| `/role` | sub: add / remove (ManageRoles gate + hierarchy guard) | ✅ |
 | `/reactionrole` | sub: create / add / remove / clear / list; classic reactions + button/select modes; modes: normal/unique/drop/verify (Carl parity, free) | 🔜 |
 | `/rolemenu` | Grouped self-assignable role menus (YAGPDB parity) | 🔜 |
 | `/temprole` | Grant role for N, auto-expire (needs scheduler) | 🔜 |
@@ -138,8 +138,8 @@ Engineering gotchas (from builders who hit the wall):
 | `/say` | Echo as bot (ManageMessages gate) | ✅ |
 | `/announce` | Embed announcement to a channel | ✅ |
 | `/embed` | Custom embed builder (free — premium elsewhere) | 🔜 |
-| `/pin` | Pin/unpin helper (pin the replied-to message) | 🔜 |
-| `/serverstats` | Saved counter snapshots + goals (owner-requested) | 🔜 |
+| `/pin` | Pin/unpin the latest message (or by ID) | ✅ |
+| `/serverstats` | Live cached stats; saved counter snapshots + goals later | ✅ v1 |
 | `/snipe` | Recent deleted messages (per-channel ring buffer) | 🔜 |
 | `/reminder` | sub: set / list / delete / channel; natural durations (`1h30m`) | 🔜 |
 | `/calc` | Math expression | 🔜 |
@@ -284,9 +284,9 @@ register handlers for custom-id prefixes (e.g. `rr:`, `poll:`, `help:`) or a han
   timeouts + per-command rate caps for the API-wrapper commands.
 - **Explicitly deferred:** Geri-style image manipulation (native canvas deps, CPU-heavy) → plugin/P4;
   anime/manga/crypto packs → plugin candidates (niche, API-churn risk).
-- **Suggested order for sprint runs** (each ≈ one batch): 1) `/say` + `/announce` ✅ + `/role` (no
-  components needed) → 2) kernel interaction registry → 3) `/poll` then reaction-roles design + build →
-  4) `/snipe` + `/case` (+scheduler when needed) → dashboard server page → README/DECISIONS refresh.
+- **Suggested order for sprint runs** (each ≈ one batch): 1) `/say` + `/announce` ✅ + `/role` ✅ (no
+  components needed) → 2) kernel interaction registry ✅ → 3) `/poll` then reaction-roles design + build →
+  4) `/snipe` + `/case` ✅ (view/list; reason/edit later; +scheduler when needed) → dashboard server page → README/DECISIONS refresh.
 
 ## 6. Sources (accessed 2026-10-07)
 
