@@ -36,6 +36,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 - Root `.env` is filled; NEVER commit or print secrets. Shell's DISCORD_TOKEN = Hermes's own bot - always `env -u DISCORD_TOKEN` for bot tests.
 - Automation Chrome (CDP 9222) may run; leave it alone.
 - Next 16 `cacheComponents`: dynamic pages need `await connection()` inside a `<Suspense>` boundary (route handlers are fine).
+- `git ls-remote` can hang past timeout on this box (network/GCM); the push itself works. To verify a push landed, use the API instead: `curl -s -H "Authorization: Bearer $MCP_GITHUB_API_KEY" https://api.github.com/repos/Wassuplol/mem/git/ref/heads/main` and compare the sha.
 
 ## What already exists (do not rebuild)
 - Kernel `@mem/core`: defineModule, ModuleRegistry (commands + events + COMPONENTS + autocomplete), tests 6/6. ModuleContext = { client, registry } - use ctx.registry inside modules.
