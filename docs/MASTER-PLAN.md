@@ -1,8 +1,8 @@
-# MASTER PLAN — v0.1 *(draft, pending research reports)*
+# MASTER PLAN — v0.2 *(draft, pending final research digest)*
 
-**Working title:** TBD (name brainstorm in progress) · **Date:** 2026-10-07 · **Status:** pre-research-synthesis
+**Working title:** **Mem** (owner pick — rename wave pending) · **Date:** 2026-10-07 · **Status:** pre-synthesis
 
-> One-liner: The community-management Discord bot done right — Red-style modularity + a first-class web dashboard + everything free + a modern, maintained stack.
+> One-liner: The community-management Discord bot done right — Red-style modularity + a first-class web dashboard + everything free + a modern, maintained stack. *Your server's memory.*
 
 ---
 
@@ -29,9 +29,11 @@
 - **Bot:** discord.js v14 (latest stable; v15 when stable), on a custom kernel layer
 - **Web:** Next.js 16 + Tailwind + shadcn/ui
 - **Data:** PostgreSQL (source of truth) + Redis (cache, BullMQ queues, pub/sub for realtime)
+- **AI:** bring-your-own OpenAI-compatible endpoint (base URL + key + model per guild) — chat, summaries, mod-assist; local models (Ollama, LM Studio) work
+- **Assets & branding:** UI icons = Lucide · original SVG brand pack in-repo · open-license emoji sets · user uploads → R2 · `CREDITS.md` tracks third-party assets
 - **Monorepo:** pnpm workspaces + Turborepo → `apps/bot`, `apps/web`, `packages/core`, `packages/db`, `packages/ui`, `plugins/*`
 - **Deploy:** Docker Compose (bot, worker, web, postgres, redis); optional reverse proxy for TLS. Same images for local and cloud.
-- **Assets:** Cloudflare R2 — transcripts, welcome-card images, CDN
+- **Assets storage:** Cloudflare R2 — transcripts, welcome-card images, CDN
 
 ## 4. Architecture (v0.1)
 
@@ -58,15 +60,15 @@ export interface ModuleManifest {
 
 ## 5. Modules (v1 targets — all free)
 
-Moderation · Automod · Security (anti-nuke w/ rollback, anti-raid, verification) · Logging · Roles & onboarding (reaction roles, autoroles, welcome) · Leveling · Tickets & modmail · Utility (custom commands, embed builder, scheduled sends, polls, giveaways, reminders, starboard, temp VC) · Fun/economy · **Music** (plugin, Lavalink; legal landscape per research #3) · **AI** (plugin: server summaries, mod assist)
+Moderation · Automod · Security (anti-nuke w/ rollback, anti-raid, verification) · Logging · Roles & onboarding (reaction roles, autoroles, welcome) · Leveling · Tickets & modmail · Utility (custom commands, embed builder, scheduled sends, polls, giveaways, reminders, starboard, temp VC) · Fun/economy · **Music** (plugin, Lavalink; legal landscape per research #3) · **AI** (core module: BYO OpenAI-compatible endpoint — chat, summaries, mod-assist)
 
 ## 6. Dashboard IA (v0.1)
 
-Servers list → Modules (cards with status + quick toggle) · per-module config pages · Embed Builder · Logs/Audit viewer (live) · Leaderboards & analytics · Settings (bot permissions, backups, export) · Plugin manager page.
+Servers list → Modules (cards with status + quick toggle) · per-module config pages · Embed Builder · Logs/Audit viewer (live) · Leaderboards & analytics · Settings (bot permissions, backups, export, AI endpoints) · Plugin manager page.
 
 ## 7. Roadmap
 
-- ✅ **P0 — Decisions locked** (stack, dashboard-first, all-free, license intent)
+- ✅ **P0 — Decisions locked** (stack, dashboard-first, all-free, license intent, name)
 - 🔜 **P1 — Foundation:** repo scaffold, core kernel (commands, events, config, module loader), Docker Compose dev env, dashboard skeleton + OAuth + server list, CI. *Done = a test module works end-to-end through the dashboard.*
 - **P2 — MVP:** moderation, logging, reaction roles, welcome, automod v1 + dashboard config for each. *Done = daily-driver usable on a real server.*
 - **P3 — Community:** leveling, tickets, modmail, custom commands, polls, embed builder.
@@ -74,17 +76,17 @@ Servers list → Modules (cards with status + quick toggle) · per-module config
 - **P5 — Plugins & extras:** module SDK docs + example plugin, music, AI, docs site, i18n.
 - **P6 — Hosted mode:** optional public bot + SaaS, migration importers (MEE6/Carl), launch checklist.
 
-## 8. Open items (research-dependent)
+## 8. Open items
 
 1. License pick — 2–3 options + recommendation (report #4)
-2. Final name + availability (report #6 + chat)
+2. Name rename wave (Mem): GitHub org + domain checks (report #6 list as backup options)
 3. Plugin sandboxing level (report #2)
 4. Sharding/scale details, message-content intent strategy (report #3)
 5. Dashboard kit + UX patterns (report #5)
+6. SQLite "lite mode" for tiny hosts? (P5; Postgres stays default)
 
 ## 9. Artifacts
 
-- Repo: github.com/Wassuplol/sonion (private; rename when named)
-- `docs/DECISIONS.md` — locked calls
-- `docs/MASTER-PLAN.md` — this file
-- `research/01..06` — research reports (landing soon)
+- Repo: github.com/Wassuplol/sonion (private; rename to `mem` pending)
+- `research/01..06` — six research reports (~150KB)
+- `docs/DECISIONS.md` — locked calls · `docs/MASTER-PLAN.md` — this file
