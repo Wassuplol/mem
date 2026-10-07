@@ -6,6 +6,7 @@ import {
   GatewayIntentBits,
   MessageFlags,
   Options,
+  Partials,
   REST,
   Routes,
   type InteractionReplyOptions,
@@ -16,6 +17,11 @@ import { services } from "./lib/services";
 import { registry } from "./registry";
 
 console.log(`[mem] ${registry.commands().length} command(s) across ${registry.list().length} module(s)`);
+console.log(
+  `[mem] members intent: ${
+    config.membersIntent ? "on" : "off (set ENABLE_MEMBERS_INTENT=1 + enable it in the Dev Portal for welcome/join-log features)"
+  }`,
+);
 
 if (!config.token) {
   console.error("[mem] DISCORD_TOKEN is missing - copy .env.example to .env and fill it in.");
@@ -24,13 +30,18 @@ if (!config.token) {
 const botToken: string = config.token;
 
 /**
- * RAM-conscious cache configuration (owner requirement: keep the bot lean).
- * - messages / presences / reactions / events: not cached (swept aggressively)
- * - members & users: capped at 100 per guild/user cache
- * All durable state lives in Postgres/Redis - nothing grows in memory.
+ * RAM-conscious client (owner requirement: keep the bot lean, ~50-100 MB).
+ * - messages / presences / reactions: never cached; members & users capped at 100
+ * - partials are lightweight handles (no caching) so events still fire
+ * - all durable state lives in Postgres/Redis - nothing grows in memory
  */
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    ...(config.membersIntent ? [GatewayIntentBits.GuildMembers] : []),
+  ],
+  partials: [Partials.Channel, Partials.Message, Partials.GuildMember],
   makeCache: Options.cacheWithLimits({
     ...Options.DefaultMakeCacheSettings,
     MessageManager: 0,
@@ -49,6 +60,20 @@ const client = new Client({
     messages: { interval: 300, lifetime: 900 },
   },
 });
+
+/* ---------- wire module events ---------- */
+for (const event of registry.events()) {
+  const handler = (...args: unknown[]) => {
+    Promise.resolve()
+      .then(() => (event.execute as (...a: unknown[]) => unknown)(...args, { client }))
+      .catch((error) => console.error(`[mem] event "${String(event.name)}" failed:`, error));
+  };
+  if (event.once) {
+    client.once(event.name, handler as never);
+  } else {
+    client.on(event.name, handler as never);
+  }
+}
 
 client.once(Events.ClientReady, async (readyClient) => {
   console.log(`[mem] online as ${readyClient.user.tag} - ${readyClient.guilds.cache.size} guild(s)`);

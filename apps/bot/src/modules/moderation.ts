@@ -1,11 +1,55 @@
 import {
   PermissionFlagsBits,
   SlashCommandBuilder,
+  type ChatInputCommandInteraction,
 } from "discord.js";
 import { defineModule } from "@mem/core";
 import { COLORS, embed } from "../lib/embed";
 import { ensureGuild, requirePermissions } from "../lib/permissions";
 import { services } from "../lib/services";
+
+type Cached = ChatInputCommandInteraction<"cached">;
+
+/** Shared by /timeout and /mute. */
+async function applyTimeout(i: Cached): Promise<void> {
+  const member = i.options.getMember("user");
+  if (!member) {
+    await i.reply({ content: "That user is not a member of this server.", flags: 64 });
+    return;
+  }
+  const minutes = i.options.getInteger("minutes", true);
+  const reason = i.options.getString("reason") ?? "No reason provided";
+  await member.timeout(minutes * 60_000, reason);
+  const record = await services.createCase({
+    guildId: i.guild.id,
+    action: "timeout",
+    targetId: member.id,
+    moderatorId: i.user.id,
+    reason,
+  });
+  await i.reply({
+    embeds: [
+      embed({
+        color: COLORS.warn,
+        title: `Timeout #${record.caseNumber}`,
+        description: `${member.user} timed out for **${minutes} min**.\n**Reason:** ${reason}`,
+      }),
+    ],
+  });
+}
+
+/** Shared by /untimeout and /unmute. */
+async function applyUntimeout(i: Cached): Promise<void> {
+  const member = i.options.getMember("user");
+  if (!member) {
+    await i.reply({ content: "That user is not a member of this server.", flags: 64 });
+    return;
+  }
+  await member.timeout(null, `by ${i.user.tag}`);
+  await i.reply({
+    embeds: [embed({ color: COLORS.success, description: `${member.user}'s timeout was removed.` })],
+  });
+}
 
 export const moderationModule = defineModule({
   id: "moderation",
@@ -75,6 +119,29 @@ export const moderationModule = defineModule({
     },
     {
       data: new SlashCommandBuilder()
+        .setName("removewarn")
+        .setDescription("Clear all active warnings from a member.")
+        .addUserOption((o) => o.setName("user").setDescription("Member").setRequired(true)),
+      async execute(interaction) {
+        const i = await ensureGuild(interaction);
+        if (!(await requirePermissions(i, PermissionFlagsBits.ModerateMembers))) return;
+        const target = i.options.getUser("user", true);
+        const cleared = await services.clearActiveWarnings(i.guild.id, target.id);
+        await i.reply({
+          embeds: [
+            embed({
+              color: COLORS.success,
+              description:
+                cleared > 0
+                  ? `Removed **${cleared}** active warning(s) from ${target}.`
+                  : `${target} has no active warnings to remove.`,
+            }),
+          ],
+        });
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
         .setName("timeout")
         .setDescription("Timeout a member.")
         .addUserOption((o) => o.setName("user").setDescription("Member").setRequired(true))
@@ -85,30 +152,22 @@ export const moderationModule = defineModule({
       async execute(interaction) {
         const i = await ensureGuild(interaction);
         if (!(await requirePermissions(i, PermissionFlagsBits.ModerateMembers))) return;
-        const member = i.options.getMember("user");
-        if (!member) {
-          await i.reply({ content: "That user is not a member of this server.", flags: 64 });
-          return;
-        }
-        const minutes = i.options.getInteger("minutes", true);
-        const reason = i.options.getString("reason") ?? "No reason provided";
-        await member.timeout(minutes * 60_000, reason);
-        const record = await services.createCase({
-          guildId: i.guild.id,
-          action: "timeout",
-          targetId: member.id,
-          moderatorId: i.user.id,
-          reason,
-        });
-        await i.reply({
-          embeds: [
-            embed({
-              color: COLORS.warn,
-              title: `Timeout #${record.caseNumber}`,
-              description: `${member.user} timed out for **${minutes} min**.\n**Reason:** ${reason}`,
-            }),
-          ],
-        });
+        await applyTimeout(i);
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
+        .setName("mute")
+        .setDescription("Mute (timeout) a member - same as /timeout.")
+        .addUserOption((o) => o.setName("user").setDescription("Member").setRequired(true))
+        .addIntegerOption((o) =>
+          o.setName("minutes").setDescription("Duration in minutes (1-10080)").setRequired(true).setMinValue(1).setMaxValue(10080),
+        )
+        .addStringOption((o) => o.setName("reason").setDescription("Reason").setMaxLength(500)),
+      async execute(interaction) {
+        const i = await ensureGuild(interaction);
+        if (!(await requirePermissions(i, PermissionFlagsBits.ModerateMembers))) return;
+        await applyTimeout(i);
       },
     },
     {
@@ -119,13 +178,18 @@ export const moderationModule = defineModule({
       async execute(interaction) {
         const i = await ensureGuild(interaction);
         if (!(await requirePermissions(i, PermissionFlagsBits.ModerateMembers))) return;
-        const member = i.options.getMember("user");
-        if (!member) {
-          await i.reply({ content: "That user is not a member of this server.", flags: 64 });
-          return;
-        }
-        await member.timeout(null, `by ${i.user.tag}`);
-        await i.reply({ embeds: [embed({ color: COLORS.success, description: `${member.user}'s timeout was removed.` })] });
+        await applyUntimeout(i);
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
+        .setName("unmute")
+        .setDescription("Unmute a member - same as /untimeout.")
+        .addUserOption((o) => o.setName("user").setDescription("Member").setRequired(true)),
+      async execute(interaction) {
+        const i = await ensureGuild(interaction);
+        if (!(await requirePermissions(i, PermissionFlagsBits.ModerateMembers))) return;
+        await applyUntimeout(i);
       },
     },
     {

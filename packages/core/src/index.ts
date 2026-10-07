@@ -1,6 +1,7 @@
 import type {
   Client,
   ChatInputCommandInteraction,
+  ClientEvents,
   SlashCommandBuilder,
   SlashCommandOptionsOnlyBuilder,
   SlashCommandSubcommandsOnlyBuilder,
@@ -24,14 +25,27 @@ export interface SlashCommand {
 }
 
 /**
+ * A gateway event subscription owned by a module.
+ * The mapped union keeps `name` and `execute` args paired (type-safe events).
+ */
+export type ModuleEvent = {
+  [K in keyof ClientEvents]: {
+    name: K;
+    once?: boolean;
+    execute: (...args: [...ClientEvents[K], ModuleContext]) => Promise<void> | void;
+  };
+}[keyof ClientEvents];
+
+/**
  * Manifest describing one feature module.
- * Later phases extend this with events, jobs, settings schemas and dashboard pages.
+ * Later phases extend this with jobs, settings schemas and dashboard pages.
  */
 export interface ModuleManifest {
   id: string;
   name: string;
   version: string;
   commands?: SlashCommand[];
+  events?: ModuleEvent[];
 }
 
 /** Identity helper for consistency + inference. */
@@ -56,5 +70,9 @@ export class ModuleRegistry {
 
   commands(): SlashCommand[] {
     return this.list().flatMap((m) => m.commands ?? []);
+  }
+
+  events(): ModuleEvent[] {
+    return this.list().flatMap((m) => m.events ?? []);
   }
 }

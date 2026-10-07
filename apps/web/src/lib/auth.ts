@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { createDb } from "@mem/db";
+import { db } from "./db";
 
 /**
  * Dashboard auth (Better Auth + Discord provider).
@@ -8,10 +8,6 @@ import { createDb } from "@mem/db";
  * (Discord Developer Portal -> your app), BETTER_AUTH_SECRET (`npx auth@latest secret`),
  * BETTER_AUTH_URL. Builds fine without them; login only works once they're set.
  */
-const { db } = createDb(
-  process.env.DATABASE_URL ?? "postgresql://mem:mem@localhost:5432/mem",
-);
-
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   secret: process.env.BETTER_AUTH_SECRET,

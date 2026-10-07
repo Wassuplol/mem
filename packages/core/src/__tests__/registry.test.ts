@@ -42,4 +42,17 @@ describe("ModuleRegistry", () => {
     registry.register(defineModule({ id: "m2", name: "M2", version: "0.0.1" }));
     expect(registry.commands().map((c) => c.data.name)).toEqual(["one", "two"]);
   });
+
+  it("flattens module events", () => {
+    const registry = new ModuleRegistry();
+    registry.register(
+      defineModule({
+        id: "ev",
+        name: "Ev",
+        version: "0.0.1",
+        events: [{ name: "guildCreate", execute: async () => undefined }],
+      }),
+    );
+    expect(registry.events().map((e) => e.name)).toEqual(["guildCreate"]);
+  });
 });

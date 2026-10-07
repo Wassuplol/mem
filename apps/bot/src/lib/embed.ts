@@ -1,5 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 
+export type { EmbedBuilder };
+
 export const COLORS = {
   brand: 0x8b5cf6, // violet
   success: 0x34d399,
