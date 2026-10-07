@@ -76,8 +76,8 @@ function Rig({ children }: { children: React.ReactNode }) {
 export function HeroScene() {
   return (
     <Canvas
-      camera={{ position: [0, 0.5, 3.5], fov: 40 }}
-      onCreated={({ camera }) => camera.lookAt(0, 0.5, 0)}
+      camera={{ position: [0, 0.88, 3.16], fov: 40 }}
+      onCreated={({ camera }) => camera.lookAt(0, 0.88, 0)}
       dpr={[1, 2]}
       gl={{ alpha: true, antialias: true }}
       style={{ background: "transparent", pointerEvents: "none" }}
@@ -89,7 +89,7 @@ export function HeroScene() {
       <Rig>
         <Stars count={520} radius={7} color="#a78bfa" size={0.035} />
         <Stars count={260} radius={5} color="#22d3ee" size={0.028} opacity={0.65} />
-        <group scale={1.06} position={[0.88, -0.05, 0]}>
+        <group scale={1.05} position={[0.92, 0, 0]}>
           <Chibi thinking={false} />
         </group>
       </Rig>
