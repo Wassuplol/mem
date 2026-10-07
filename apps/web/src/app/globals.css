@@ -100,3 +100,64 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.45); }
 
 ::selection { background: rgba(139, 92, 246, 0.4); color: #fff; }
+
+/* ---------- cinematic layer ---------- */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.page-enter { animation: pageIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes sheen {
+  0%, 55% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+.btn-hero { position: relative; overflow: hidden; }
+.btn-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.28) 50%, transparent 58%);
+  animation: sheen 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes hero-glow {
+  0%, 100% { box-shadow: 0 0 28px -6px rgba(139, 92, 246, 0.55), 0 0 80px -20px rgba(34, 211, 238, 0.35); }
+  50% { box-shadow: 0 0 44px -4px rgba(139, 92, 246, 0.8), 0 0 110px -14px rgba(34, 211, 238, 0.5); }
+}
+.hero-glow { animation: hero-glow 3.6s ease-in-out infinite; }
+
+/* twinkling star layers for the ambient background */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.stars {
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 22%, rgba(255,255,255,0.7), transparent 100%),
+    radial-gradient(1px 1px at 34% 68%, rgba(196,181,253,0.8), transparent 100%),
+    radial-gradient(1.4px 1.4px at 58% 14%, rgba(255,255,255,0.6), transparent 100%),
+    radial-gradient(1px 1px at 76% 46%, rgba(103,232,249,0.7), transparent 100%),
+    radial-gradient(1.2px 1.2px at 88% 78%, rgba(255,255,255,0.55), transparent 100%),
+    radial-gradient(1px 1px at 22% 88%, rgba(196,181,253,0.65), transparent 100%),
+    radial-gradient(1.3px 1.3px at 66% 62%, rgba(255,255,255,0.5), transparent 100%),
+    radial-gradient(1px 1px at 44% 38%, rgba(103,232,249,0.55), transparent 100%);
+  animation: twinkle 5.5s ease-in-out infinite;
+}
+.stars-b {
+  background-image:
+    radial-gradient(1px 1px at 8% 54%, rgba(255,255,255,0.5), transparent 100%),
+    radial-gradient(1.4px 1.4px at 28% 12%, rgba(196,181,253,0.6), transparent 100%),
+    radial-gradient(1px 1px at 52% 82%, rgba(255,255,255,0.45), transparent 100%),
+    radial-gradient(1.2px 1.2px at 72% 30%, rgba(103,232,249,0.6), transparent 100%),
+    radial-gradient(1px 1px at 94% 58%, rgba(255,255,255,0.5), transparent 100%);
+  animation: twinkle 7s ease-in-out 1.2s infinite;
+}
+
+/* scroll hint */
+@keyframes scroll-hint {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(7px); opacity: 1; }
+}
+.animate-scroll-hint { animation: scroll-hint 1.9s ease-in-out infinite; }

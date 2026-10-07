@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Send, X } from "lucide-react";
 
@@ -43,6 +43,7 @@ export function MemiAssistant() {
   const [webgl, setWebgl] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     try {
@@ -102,6 +103,9 @@ export function MemiAssistant() {
     window.localStorage.setItem("memi-seen", "1");
     setOpen((o) => !o);
   };
+
+  // The landing page hero features her big - no duplicate widget there.
+  if (pathname === "/") return null;
 
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">

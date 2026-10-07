@@ -31,7 +31,7 @@ export function SignInButton({
     return (
       <button
         onClick={signIn}
-        className="inline-flex items-center gap-2.5 rounded-xl border border-white/12 bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-[#5865F2]/50 hover:bg-[#5865F2]/10 hover:text-white active:scale-[0.98]"
+        className="inline-flex items-center gap-2.5 rounded-xl border border-[#5865F2]/35 bg-[#5865F2]/[0.09] px-5 py-2.5 text-sm font-medium text-[#c7ccff] backdrop-blur-md transition hover:border-[#5865F2]/70 hover:bg-[#5865F2]/[0.18] hover:text-white active:scale-[0.98]"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current text-[#8f9bff]" aria-hidden>
           <path d={DISCORD_PATH} />

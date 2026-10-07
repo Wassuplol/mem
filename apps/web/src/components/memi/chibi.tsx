@@ -4,9 +4,13 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
-const SKIN = "#f6f3ff";
-const SKIN_SHADE = "#e9e3ff";
-const INK = "#241f3d";
+const SKIN = "#ffe8d9";
+const HAIR = "#b9a1f7";
+const HAIR_DARK = "#9a7fe8";
+const DRESS = "#6d4fd0";
+const RIBBON = "#22d3ee";
+const IRIS = "#7c5cff";
+const INK = "#2a2342";
 
 /** Soft radial gradient under her - generated once as a canvas texture. */
 function GlowDisc() {
@@ -34,15 +38,70 @@ function GlowDisc() {
   );
 }
 
+/** One anime eye: white base, violet iris, pupil, two glints. Blinks via group scale. */
+function Eye({ x }: { x: number }) {
+  return (
+    <group position={[x, 0.03, 0.43]}>
+      <mesh position={[0, 0, 0.02]} scale={[0.95, 1.2, 0.5]}>
+        <sphereGeometry args={[0.095, 24, 24]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.2} />
+      </mesh>
+      <mesh position={[0, 0, 0.055]} scale={[1, 1.15, 0.5]}>
+        <sphereGeometry args={[0.07, 24, 24]} />
+        <meshStandardMaterial color={IRIS} roughness={0.15} emissive={IRIS} emissiveIntensity={0.35} />
+      </mesh>
+      <mesh position={[0, 0, 0.075]} scale={[1, 1, 0.5]}>
+        <sphereGeometry args={[0.038, 16, 16]} />
+        <meshStandardMaterial color={INK} roughness={0.2} />
+      </mesh>
+      <mesh position={[-0.03, 0.04, 0.095]}>
+        <sphereGeometry args={[0.026, 12, 12]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+      <mesh position={[0.028, -0.022, 0.1]}>
+        <sphereGeometry args={[0.013, 10, 10]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+    </group>
+  );
+}
+
+/** One twintail: ribbon tie + two segments + tip, sways in useFrame. */
+function TwinTail({ side, groupRef }: { side: 1 | -1; groupRef: React.RefObject<THREE.Group | null> }) {
+  return (
+    <group ref={groupRef} position={[side * 0.54, 0.18, -0.02]}>
+      <mesh>
+        <sphereGeometry args={[0.085, 16, 16]} />
+        <meshStandardMaterial color={RIBBON} roughness={0.3} emissive={RIBBON} emissiveIntensity={0.25} />
+      </mesh>
+      <mesh position={[side * 0.14, -0.13, -0.04]}>
+        <sphereGeometry args={[0.13, 20, 20]} />
+        <meshStandardMaterial color={HAIR} roughness={0.5} />
+      </mesh>
+      <mesh position={[side * 0.23, -0.32, -0.06]} rotation-z={side * 0.5}>
+        <capsuleGeometry args={[0.1, 0.22, 8, 16]} />
+        <meshStandardMaterial color={HAIR_DARK} roughness={0.55} />
+      </mesh>
+      <mesh position={[side * 0.32, -0.5, -0.07]}>
+        <sphereGeometry args={[0.1, 16, 16]} />
+        <meshStandardMaterial color={HAIR} roughness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
 /**
- * Memi - a procedural chibi: floats, bobs, blinks, tracks the cursor,
- * wanders around her corner and gets excited while "thinking".
+ * Memi - an anime chibi girl: twintails, bangs, big violet eyes, a dress with
+ * a cyan ribbon. Floats, bobs, blinks, tracks the cursor, wanders and gets
+ * excited while "thinking".
  */
-function Chibi({ thinking }: { thinking: boolean }) {
+export function Chibi({ thinking }: { thinking: boolean }) {
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
-  const eyeL = useRef<THREE.Mesh>(null);
-  const eyeR = useRef<THREE.Mesh>(null);
+  const eyeL = useRef<THREE.Group>(null);
+  const eyeR = useRef<THREE.Group>(null);
+  const tailL = useRef<THREE.Group>(null);
+  const tailR = useRef<THREE.Group>(null);
   const pointer = useThree((s) => s.pointer);
   const nextBlink = useRef(2.5);
   const blink = useRef(0);
@@ -69,6 +128,10 @@ function Chibi({ thinking }: { thinking: boolean }) {
       head.current.rotation.y += (ty - head.current.rotation.y) * Math.min(1, delta * 4.5);
       head.current.rotation.x += (tx - head.current.rotation.x) * Math.min(1, delta * 4.5);
     }
+    // twintail sway
+    if (tailL.current) tailL.current.rotation.z = 0.12 + Math.sin(t * 2.1) * 0.1;
+    if (tailR.current) tailR.current.rotation.z = -0.12 + Math.sin(t * 2.1 + 1.4) * 0.1;
+    // blink
     if (t > nextBlink.current) {
       blink.current = 1;
       nextBlink.current = t + 2.4 + Math.random() * 3.4;
@@ -84,98 +147,157 @@ function Chibi({ thinking }: { thinking: boolean }) {
       <GlowDisc />
       <pointLight position={[0, -0.4, 0.6]} intensity={0.45} color="#8b5cf6" distance={2.5} />
 
-      {/* body */}
-      <mesh position={[0, 0.02, 0]}>
-        <sphereGeometry args={[0.34, 32, 32]} />
-        <meshStandardMaterial color={SKIN_SHADE} roughness={0.4} />
+      {/* dress */}
+      <mesh position={[0, -0.12, 0]}>
+        <cylinderGeometry args={[0.2, 0.46, 0.42, 32]} />
+        <meshStandardMaterial color={DRESS} roughness={0.5} />
+      </mesh>
+      <mesh position={[0, -0.33, 0]} rotation-x={Math.PI / 2}>
+        <torusGeometry args={[0.45, 0.022, 10, 40]} />
+        <meshStandardMaterial color="#f7f5ff" roughness={0.35} />
       </mesh>
 
-      {/* arms */}
-      <mesh position={[-0.36, 0.12, 0]} rotation-z={0.5}>
-        <capsuleGeometry args={[0.06, 0.16, 8, 16]} />
-        <meshStandardMaterial color={SKIN_SHADE} roughness={0.45} />
+      {/* torso + collar + chest ribbon */}
+      <mesh position={[0, 0.1, 0]}>
+        <sphereGeometry args={[0.26, 28, 28]} />
+        <meshStandardMaterial color="#f7f5ff" roughness={0.4} />
       </mesh>
-      <mesh position={[0.36, 0.12, 0]} rotation-z={-0.5}>
-        <capsuleGeometry args={[0.06, 0.16, 8, 16]} />
-        <meshStandardMaterial color={SKIN_SHADE} roughness={0.45} />
+      <mesh position={[0, 0.32, 0]} rotation-x={Math.PI / 2}>
+        <torusGeometry args={[0.14, 0.028, 10, 32]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.3} />
       </mesh>
-      {/* hands */}
-      <mesh position={[-0.3, 0.25, 0]}>
-        <sphereGeometry args={[0.075, 16, 16]} />
+      <mesh position={[0, 0.26, 0.235]}>
+        <sphereGeometry args={[0.045, 14, 14]} />
+        <meshStandardMaterial color={RIBBON} roughness={0.3} emissive={RIBBON} emissiveIntensity={0.3} />
+      </mesh>
+      <mesh position={[-0.09, 0.27, 0.22]} rotation-z={0.5} scale={[1.3, 0.7, 0.4]}>
+        <sphereGeometry args={[0.06, 14, 14]} />
+        <meshStandardMaterial color={RIBBON} roughness={0.3} />
+      </mesh>
+      <mesh position={[0.09, 0.27, 0.22]} rotation-z={-0.5} scale={[1.3, 0.7, 0.4]}>
+        <sphereGeometry args={[0.06, 14, 14]} />
+        <meshStandardMaterial color={RIBBON} roughness={0.3} />
+      </mesh>
+      <mesh position={[-0.045, 0.19, 0.235]} rotation-z={0.45}>
+        <capsuleGeometry args={[0.022, 0.07, 6, 12]} />
+        <meshStandardMaterial color={RIBBON} roughness={0.35} />
+      </mesh>
+      <mesh position={[0.045, 0.19, 0.235]} rotation-z={-0.45}>
+        <capsuleGeometry args={[0.022, 0.07, 6, 12]} />
+        <meshStandardMaterial color={RIBBON} roughness={0.35} />
+      </mesh>
+
+      {/* arms + hands */}
+      <mesh position={[-0.35, 0.13, 0]} rotation-z={0.5}>
+        <capsuleGeometry args={[0.055, 0.22, 8, 16]} />
+        <meshStandardMaterial color={SKIN} roughness={0.45} />
+      </mesh>
+      <mesh position={[0.35, 0.13, 0]} rotation-z={-0.5}>
+        <capsuleGeometry args={[0.055, 0.22, 8, 16]} />
+        <meshStandardMaterial color={SKIN} roughness={0.45} />
+      </mesh>
+      <mesh position={[-0.28, 0.26, 0]}>
+        <sphereGeometry args={[0.068, 16, 16]} />
         <meshStandardMaterial color={SKIN} roughness={0.4} />
       </mesh>
-      <mesh position={[0.3, 0.25, 0]}>
-        <sphereGeometry args={[0.075, 16, 16]} />
+      <mesh position={[0.28, 0.26, 0]}>
+        <sphereGeometry args={[0.068, 16, 16]} />
         <meshStandardMaterial color={SKIN} roughness={0.4} />
       </mesh>
 
       {/* head (tracks the cursor) */}
-      <group ref={head} position={[0, 0.72, 0]}>
+      <group ref={head} position={[0, 0.78, 0]}>
+        {/* face */}
         <mesh>
-          <sphereGeometry args={[0.5, 48, 48]} />
-          <meshStandardMaterial color={SKIN} roughness={0.32} />
+          <sphereGeometry args={[0.48, 48, 48]} />
+          <meshStandardMaterial color={SKIN} roughness={0.35} />
         </mesh>
 
-        {/* eyes + glints */}
-        <mesh ref={eyeL} position={[-0.17, 0.05, 0.44]}>
-          <sphereGeometry args={[0.07, 24, 24]} />
-          <meshStandardMaterial color={INK} roughness={0.25} />
+        {/* back hair + cap */}
+        <mesh position={[0, 0.02, -0.14]}>
+          <sphereGeometry args={[0.5, 32, 32]} />
+          <meshStandardMaterial color={HAIR_DARK} roughness={0.55} />
         </mesh>
-        <mesh ref={eyeR} position={[0.17, 0.05, 0.44]}>
-          <sphereGeometry args={[0.07, 24, 24]} />
-          <meshStandardMaterial color={INK} roughness={0.25} />
+        <mesh position={[0, 0.1, -0.1]}>
+          <sphereGeometry args={[0.5, 32, 32]} />
+          <meshStandardMaterial color={HAIR} roughness={0.5} />
         </mesh>
-        <mesh position={[-0.15, 0.09, 0.49]}>
-          <sphereGeometry args={[0.022, 12, 12]} />
-          <meshBasicMaterial color="#ffffff" />
+
+        {/* bangs */}
+        {[-0.3, -0.15, 0, 0.15, 0.3].map((x, i) => (
+          <mesh key={i} position={[x, 0.29 + (i % 2 === 0 ? 0.02 : 0), 0.42]} scale={[0.95, 1.25, 0.55]} rotation-z={x * 0.35}>
+            <sphereGeometry args={[0.11, 18, 18]} />
+            <meshStandardMaterial color={HAIR} roughness={0.5} />
+          </mesh>
+        ))}
+        {/* side bangs */}
+        <mesh position={[-0.38, 0.2, 0.3]} scale={[0.8, 1.5, 0.5]} rotation-z={0.3}>
+          <sphereGeometry args={[0.11, 18, 18]} />
+          <meshStandardMaterial color={HAIR} roughness={0.5} />
         </mesh>
-        <mesh position={[0.19, 0.09, 0.49]}>
-          <sphereGeometry args={[0.022, 12, 12]} />
-          <meshBasicMaterial color="#ffffff" />
+        <mesh position={[0.38, 0.2, 0.3]} scale={[0.8, 1.5, 0.5]} rotation-z={-0.3}>
+          <sphereGeometry args={[0.11, 18, 18]} />
+          <meshStandardMaterial color={HAIR} roughness={0.5} />
         </mesh>
+
+        {/* side locks */}
+        <mesh position={[-0.44, 0.05, 0.12]} rotation-z={0.1}>
+          <capsuleGeometry args={[0.065, 0.28, 8, 16]} />
+          <meshStandardMaterial color={HAIR_DARK} roughness={0.55} />
+        </mesh>
+        <mesh position={[0.44, 0.05, 0.12]} rotation-z={-0.1}>
+          <capsuleGeometry args={[0.065, 0.28, 8, 16]} />
+          <meshStandardMaterial color={HAIR_DARK} roughness={0.55} />
+        </mesh>
+
+        {/* twintails */}
+        <TwinTail side={-1} groupRef={tailL} />
+        <TwinTail side={1} groupRef={tailR} />
+
+        {/* eyes */}
+        <group ref={eyeL}>
+          <Eye x={-0.18} />
+        </group>
+        <group ref={eyeR}>
+          <Eye x={0.18} />
+        </group>
 
         {/* blush */}
-        <mesh position={[-0.27, -0.08, 0.4]} scale={[1, 0.55, 0.4]}>
-          <sphereGeometry args={[0.07, 16, 16]} />
-          <meshBasicMaterial color="#ff9ecb" transparent opacity={0.55} />
+        <mesh position={[-0.3, -0.06, 0.37]} scale={[1, 0.5, 0.35]}>
+          <sphereGeometry args={[0.075, 16, 16]} />
+          <meshBasicMaterial color="#ffb3d1" transparent opacity={0.6} />
         </mesh>
-        <mesh position={[0.27, -0.08, 0.4]} scale={[1, 0.55, 0.4]}>
-          <sphereGeometry args={[0.07, 16, 16]} />
-          <meshBasicMaterial color="#ff9ecb" transparent opacity={0.55} />
-        </mesh>
-
-        {/* tiny smile */}
-        <mesh position={[0, -0.09, 0.47]} rotation={[0, 0, Math.PI * 1.25]}>
-          <torusGeometry args={[0.07, 0.016, 12, 24, Math.PI * 0.5]} />
-          <meshStandardMaterial color={INK} roughness={0.3} />
+        <mesh position={[0.3, -0.06, 0.37]} scale={[1, 0.5, 0.35]}>
+          <sphereGeometry args={[0.075, 16, 16]} />
+          <meshBasicMaterial color="#ffb3d1" transparent opacity={0.6} />
         </mesh>
 
-        {/* antenna + glowing tip */}
-        <mesh position={[0.03, 0.57, 0]} rotation-z={0.16}>
-          <cylinderGeometry args={[0.02, 0.02, 0.26, 10]} />
-          <meshStandardMaterial color="#cfc6ff" roughness={0.35} />
+        {/* smile */}
+        <mesh position={[0, -0.15, 0.45]} rotation-z={Math.PI * 1.2}>
+          <torusGeometry args={[0.045, 0.012, 10, 20, Math.PI * 0.6]} />
+          <meshStandardMaterial color="#c96a8e" roughness={0.3} />
         </mesh>
-        <mesh position={[0.075, 0.72, 0]}>
-          <sphereGeometry args={[0.065, 16, 16]} />
+
+        {/* ahoge + glowing tip */}
+        <mesh position={[0.03, 0.63, 0]} rotation-z={0.18}>
+          <cylinderGeometry args={[0.021, 0.021, 0.24, 8]} />
+          <meshStandardMaterial color="#d9c9ff" roughness={0.4} />
+        </mesh>
+        <mesh position={[0.07, 0.76, 0]}>
+          <sphereGeometry args={[0.06, 16, 16]} />
           <meshStandardMaterial color="#c4b5fd" emissive="#8b5cf6" emissiveIntensity={2.2} />
         </mesh>
-        <pointLight position={[0.075, 0.72, 0]} intensity={0.7} color="#a78bfa" distance={1.8} />
+        <pointLight position={[0.07, 0.76, 0]} intensity={0.7} color="#a78bfa" distance={1.8} />
       </group>
-
-      {/* brand collar */}
-      <mesh position={[0, 0.4, 0]} rotation-x={Math.PI / 2}>
-        <torusGeometry args={[0.2, 0.035, 12, 40]} />
-        <meshStandardMaterial color="#22d3ee" emissive="#0891b2" emissiveIntensity={0.5} roughness={0.3} />
-      </mesh>
     </group>
   );
 }
 
 /** Transparent canvas wrapper - sized by its parent. */
-export function ChibiCanvas({ thinking }: { thinking: boolean }) {
+export function ChibiCanvas({ thinking, cameraZ = 3.2, fov = 42 }: { thinking: boolean; cameraZ?: number; fov?: number }) {
   return (
     <Canvas
-      camera={{ position: [0, 0.42, 3.2], fov: 42 }}
+      camera={{ position: [0, 0.42, cameraZ], fov }}
       onCreated={({ camera }) => camera.lookAt(0, 0.42, 0)}
       dpr={[1, 2]}
       gl={{ alpha: true, antialias: true }}
