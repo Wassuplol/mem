@@ -45,4 +45,41 @@ export const modCases = pgTable(
 
 export type ModCase = typeof modCases.$inferSelect;
 
+/** Polls: message-attached polls with live result edits. */
+export const polls = pgTable(
+  "polls",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    channelId: text("channel_id"),
+    messageId: text("message_id"),
+    authorId: text("author_id").notNull(),
+    question: text("question").notNull(),
+    options: jsonb("options").$type<string[]>().notNull(),
+    multiple: boolean("multiple").notNull().default(false),
+    closed: boolean("closed").notNull().default(false),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("polls_guild_idx").on(t.guildId), index("polls_message_idx").on(t.messageId)],
+);
+
+export type Poll = typeof polls.$inferSelect;
+
+/** One row per (poll, user, option). Single-choice polls replace prior rows on vote. */
+export const pollVotes = pgTable(
+  "poll_votes",
+  {
+    pollId: text("poll_id")
+      .notNull()
+      .references(() => polls.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    optionIndex: integer("option_index").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.pollId, t.userId, t.optionIndex] })],
+);
+
+export type PollVote = typeof pollVotes.$inferSelect;
+
 export * from "./schema/auth";

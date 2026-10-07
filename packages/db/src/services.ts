@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
-import { guildSettings, guilds, modCases, type ModCase } from "./schema";
+import { guildSettings, guilds, modCases, pollVotes, polls, type ModCase, type Poll } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -121,6 +121,106 @@ export function createServices(db: Db) {
         .where(where)
         .orderBy(desc(modCases.caseNumber))
         .limit(Math.min(Math.max(opts.limit ?? 10, 1), 25));
+    },
+
+    /* ---------- polls ---------- */
+
+    async createPoll(input: {
+      guildId: string;
+      channelId?: string | null;
+      authorId: string;
+      question: string;
+      options: string[];
+      multiple?: boolean;
+      durationMinutes?: number | null;
+    }): Promise<Poll> {
+      const endsAt =
+        input.durationMinutes && input.durationMinutes > 0
+          ? new Date(Date.now() + input.durationMinutes * 60_000)
+          : null;
+      const [row] = await db
+        .insert(polls)
+        .values({
+          id: randomUUID(),
+          guildId: input.guildId,
+          channelId: input.channelId ?? null,
+          authorId: input.authorId,
+          question: input.question,
+          options: input.options,
+          multiple: input.multiple ?? false,
+          endsAt,
+        })
+        .returning();
+      if (!row) throw new Error("Could not create poll");
+      return row;
+    },
+
+    async attachPollMessage(pollId: string, messageId: string): Promise<void> {
+      await db.update(polls).set({ messageId }).where(eq(polls.id, pollId));
+    },
+
+    async getPoll(pollId: string): Promise<Poll | null> {
+      const rows = await db.select().from(polls).where(eq(polls.id, pollId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    async getPollByMessage(messageId: string): Promise<Poll | null> {
+      const rows = await db.select().from(polls).where(eq(polls.messageId, messageId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    /**
+     * Toggle a vote (same option twice = un-vote). Single-choice polls first
+     * clear the user's other votes; multi-choice polls keep them.
+     */
+    async votePoll(pollId: string, userId: string, optionIndex: number): Promise<"added" | "removed"> {
+      const poll = await this.getPoll(pollId);
+      if (!poll) throw new Error("Poll not found");
+      const mine = and(eq(pollVotes.pollId, pollId), eq(pollVotes.userId, userId), eq(pollVotes.optionIndex, optionIndex));
+      return db.transaction(async (tx) => {
+        const existing = await tx.select().from(pollVotes).where(mine).limit(1);
+        if (existing.length > 0) {
+          await tx.delete(pollVotes).where(mine);
+          return "removed" as const;
+        }
+        if (!poll.multiple) {
+          await tx.delete(pollVotes).where(and(eq(pollVotes.pollId, pollId), eq(pollVotes.userId, userId)));
+        }
+        await tx.insert(pollVotes).values({ pollId, userId, optionIndex });
+        return "added" as const;
+      });
+    },
+
+    /** Aggregated vote counts for rendering. */
+    async getPollTally(pollId: string): Promise<{ counts: number[]; totalVotes: number; voterCount: number }> {
+      const poll = await this.getPoll(pollId);
+      const rows = await db
+        .select({ optionIndex: pollVotes.optionIndex, userId: pollVotes.userId })
+        .from(pollVotes)
+        .where(eq(pollVotes.pollId, pollId));
+      const counts = new Array<number>(poll?.options.length ?? 0).fill(0);
+      const voters = new Set<string>();
+      for (const row of rows) {
+        voters.add(row.userId);
+        if (row.optionIndex >= 0 && row.optionIndex < counts.length) {
+          counts[row.optionIndex] = (counts[row.optionIndex] ?? 0) + 1;
+        }
+      }
+      return { counts, totalVotes: rows.length, voterCount: voters.size };
+    },
+
+    async closePoll(pollId: string): Promise<void> {
+      await db.update(polls).set({ closed: true }).where(eq(polls.id, pollId));
+    },
+
+    /** Open (not closed) polls for a guild, newest first. */
+    async listOpenPolls(guildId: string, limit = 10): Promise<Poll[]> {
+      return db
+        .select()
+        .from(polls)
+        .where(and(eq(polls.guildId, guildId), eq(polls.closed, false)))
+        .orderBy(desc(polls.createdAt))
+        .limit(Math.min(Math.max(limit, 1), 25));
     },
   };
 }

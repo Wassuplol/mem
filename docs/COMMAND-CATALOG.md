@@ -8,7 +8,7 @@ past Discord's command limits — using patterns from the bots we intend to beat
 
 **Status legend:** ✅ live (in `apps/bot`) · 🔜 next (sprint target, shippable in single runs) · 📅 planned (P3+ per `docs/MASTER-PLAN.md`) · 🧩 plugin candidate.
 
-**Coverage: 28 live · 61 next · 11 planned = 100 target.** (live = registered top-level names; subcommand coverage grows within them)
+**Coverage: 29 live · 60 next · 11 planned = 100 target.** (live = registered top-level names; subcommand coverage grows within them)
 
 ## 1. The limit problem (and how big bots dodge it)
 
@@ -134,7 +134,7 @@ Engineering gotchas (from builders who hit the wall):
 | Command | Notes | Status |
 | --- | --- | --- |
 | `/serverinfo` `/userinfo` `/avatar` `/membercount` `/servericon` | Info pack | ✅ |
-| `/poll` | 2–10 options (buttons; needs component hook) | 🔜 |
+| `/poll` | create (modal form) / end / list — live bar results, multi-select, lazy auto-close, ‹End› button | ✅ |
 | `/say` | Echo as bot (ManageMessages gate) | ✅ |
 | `/announce` | Embed announcement to a channel | ✅ |
 | `/embed` | Custom embed builder (free — premium elsewhere) | 🔜 |
@@ -263,16 +263,13 @@ Engineering gotchas (from builders who hit the wall):
 | --- | --- | --- |
 | `/command` | Enable/disable commands & modules per guild (Dyno/Red parity; pairs with per-guild registration strategy) | 🔜 |
 
-## 4. Prerequisite: component interactions
+## 4. Prerequisite: component interactions — ✅ shipped
 
-Several next-wave commands need **button/select-menu handling**, which the kernel doesn't support yet:
-
-- `/poll` (buttons), `/reactionrole` (select menus + buttons), `/rolemenu` (select), `/verification`
-  (button/select), `/trivia` + `/rps` (game buttons), `/help` (pagination buttons).
-
-Plan: extend `@mem/core` with an **interaction registry** mirroring `commands` + `events` — modules
-register handlers for custom-id prefixes (e.g. `rr:`, `poll:`, `help:`) or a handler map. Build this
-**before** reaction-roles v1; it unblocks ~8 catalog entries at once.
+The interaction kernel landed in run 1.5 (`@mem/core` component handlers keyed by custom-id prefix,
+plus autocomplete passthrough). Live handlers: `help:` (category browse + pagination + search) and
+`poll:` (modal create + vote buttons + end button). Next consumer: `rr:` for reaction-roles v1, then
+`/rolemenu`, `/verification`, games (`/trivia`, `/rps`) — all reuse the per-module pattern: pick a
+custom-id scheme, register one `ComponentHandler`, keep heavy state in Postgres.
 
 ## 5. Implementation notes
 
@@ -285,8 +282,9 @@ register handlers for custom-id prefixes (e.g. `rr:`, `poll:`, `help:`) or a han
 - **Explicitly deferred:** Geri-style image manipulation (native canvas deps, CPU-heavy) → plugin/P4;
   anime/manga/crypto packs → plugin candidates (niche, API-churn risk).
 - **Suggested order for sprint runs** (each ≈ one batch): 1) `/say` + `/announce` ✅ + `/role` ✅ (no
-  components needed) → 2) kernel interaction registry ✅ → 3) `/poll` then reaction-roles design + build →
-  4) `/snipe` + `/case` ✅ (view/list; reason/edit later; +scheduler when needed) → dashboard server page → README/DECISIONS refresh.
+  components needed) → 2) kernel interaction registry ✅ → 3) `/poll` ✅ (run 3: modal + buttons + live
+  results + lazy auto-close) → 3b) reaction-roles v1 (`rr:` handler + `/reactionrole create|add|remove|list`)
+  → 4) `/snipe` + `/case` ✅ → dashboard server page → README/DECISIONS refresh.
 
 ## 6. Sources (accessed 2026-10-07)
 
