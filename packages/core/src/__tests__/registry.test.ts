@@ -55,4 +55,17 @@ describe("ModuleRegistry", () => {
     );
     expect(registry.events().map((e) => e.name)).toEqual(["guildCreate"]);
   });
+
+  it("flattens module component handlers", () => {
+    const registry = new ModuleRegistry();
+    registry.register(
+      defineModule({
+        id: "ui",
+        name: "UI",
+        version: "0.0.1",
+        components: [{ customIdPrefix: "poll:", execute: async () => undefined }],
+      }),
+    );
+    expect(registry.components().map((h) => h.customIdPrefix)).toEqual(["poll:"]);
+  });
 });

@@ -9,6 +9,7 @@ import {
   Partials,
   REST,
   Routes,
+  type Interaction,
   type InteractionReplyOptions,
 } from "discord.js";
 import { config } from "./lib/config";
@@ -16,7 +17,9 @@ import { UserError } from "./lib/permissions";
 import { services } from "./lib/services";
 import { registry } from "./registry";
 
-console.log(`[mem] ${registry.commands().length} command(s) across ${registry.list().length} module(s)`);
+console.log(
+  `[mem] ${registry.commands().length} command(s), ${registry.events().length} event(s), ${registry.components().length} component handler(s) across ${registry.list().length} module(s)`,
+);
 console.log(
   `[mem] members intent: ${
     config.membersIntent ? "on" : "off (set ENABLE_MEMBERS_INTENT=1 + enable it in the Dev Portal for welcome/join-log features)"
@@ -87,35 +90,61 @@ client.on(Events.GuildCreate, (guild) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-
-  const command = registry.commands().find((c) => c.data.name === interaction.commandName);
-  if (!command) return;
-
   try {
-    await command.execute(interaction, { client });
-  } catch (error) {
-    if (error instanceof UserError) {
-      const message: InteractionReplyOptions = { content: error.message, flags: MessageFlags.Ephemeral };
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(message).catch(() => undefined);
-      } else {
-        await interaction.reply(message).catch(() => undefined);
-      }
+    if (interaction.isAutocomplete()) {
+      const command = registry.commands().find((c) => c.data.name === interaction.commandName);
+      if (command?.autocomplete) await command.autocomplete(interaction, { client });
       return;
     }
-    console.error(`[mem] /${interaction.commandName} failed:`, error);
-    const message: InteractionReplyOptions = {
-      content: "Something went wrong running that command.",
-      flags: MessageFlags.Ephemeral,
-    };
+
+    if (interaction.isChatInputCommand()) {
+      const command = registry.commands().find((c) => c.data.name === interaction.commandName);
+      if (!command) return;
+      await command.execute(interaction, { client });
+      return;
+    }
+
+    if (interaction.isMessageComponent() || interaction.isModalSubmit()) {
+      const handler = registry.components().find((h) => interaction.customId.startsWith(h.customIdPrefix));
+      if (handler) await handler.execute(interaction, { client });
+      return;
+    }
+  } catch (error) {
+    await handleInteractionError(interaction, error);
+  }
+});
+
+async function handleInteractionError(interaction: Interaction, error: unknown): Promise<void> {
+  if (interaction.isAutocomplete()) {
+    await interaction.respond([]).catch(() => undefined);
+    return;
+  }
+  if (!interaction.isRepliable()) {
+    console.error("[mem] unhandled interaction error:", error);
+    return;
+  }
+
+  if (error instanceof UserError) {
+    const message: InteractionReplyOptions = { content: error.message, flags: MessageFlags.Ephemeral };
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp(message).catch(() => undefined);
     } else {
       await interaction.reply(message).catch(() => undefined);
     }
+    return;
   }
-});
+
+  console.error("[mem] interaction failed:", error);
+  const message: InteractionReplyOptions = {
+    content: "Something went wrong running that command.",
+    flags: MessageFlags.Ephemeral,
+  };
+  if (interaction.replied || interaction.deferred) {
+    await interaction.followUp(message).catch(() => undefined);
+  } else {
+    await interaction.reply(message).catch(() => undefined);
+  }
+}
 
 async function registerCommands(): Promise<void> {
   const body = registry.commands().map((c) => c.data.toJSON());

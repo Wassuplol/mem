@@ -1,7 +1,11 @@
 import type {
-  Client,
+  AnySelectMenuInteraction,
+  AutocompleteInteraction,
+  ButtonInteraction,
   ChatInputCommandInteraction,
+  Client,
   ClientEvents,
+  ModalSubmitInteraction,
   SlashCommandBuilder,
   SlashCommandOptionsOnlyBuilder,
   SlashCommandSubcommandsOnlyBuilder,
@@ -22,6 +26,18 @@ export interface ModuleContext {
 export interface SlashCommand {
   data: AnySlashCommandBuilder;
   execute(interaction: ChatInputCommandInteraction, ctx: ModuleContext): Promise<void>;
+  /** Optional type-to-search support for string options. */
+  autocomplete?(interaction: AutocompleteInteraction, ctx: ModuleContext): Promise<void>;
+}
+
+/** UI interactions a module can own (buttons, selects, modals). */
+export type ComponentInteraction = ButtonInteraction | AnySelectMenuInteraction | ModalSubmitInteraction;
+
+/** A handler for UI interactions, matched by customId prefix (e.g. "poll:"). */
+export interface ComponentHandler {
+  /** customId prefix this handler owns; first matching module wins. */
+  customIdPrefix: string;
+  execute(interaction: ComponentInteraction, ctx: ModuleContext): Promise<void>;
 }
 
 /**
@@ -46,6 +62,7 @@ export interface ModuleManifest {
   version: string;
   commands?: SlashCommand[];
   events?: ModuleEvent[];
+  components?: ComponentHandler[];
 }
 
 /** Identity helper for consistency + inference. */
@@ -74,5 +91,9 @@ export class ModuleRegistry {
 
   events(): ModuleEvent[] {
     return this.list().flatMap((m) => m.events ?? []);
+  }
+
+  components(): ComponentHandler[] {
+    return this.list().flatMap((m) => m.components ?? []);
   }
 }
