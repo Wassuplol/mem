@@ -174,23 +174,5 @@ export const utilityModule = defineModule({
         await i.reply({ content: `Announcement posted in <#${channel.id}>.`, flags: 64 });
       },
     },
-    {
-      data: new SlashCommandBuilder().setName("help").setDescription("List every Mem command."),
-      async execute(interaction) {
-        const { registry } = await import("../registry");
-        const fields = registry.list().map((feature) => ({
-          name: `${feature.name}`,
-          value: (feature.commands ?? []).map((c) => `\`/${c.data.name}\``).join(" ") || "-",
-        }));
-        await interaction.reply({
-          embeds: [
-            embed({
-              title: "Mem - commands",
-              description: `${registry.commands().length} commands across ${registry.list().length} modules.`,
-            }).addFields(fields),
-          ],
-        });
-      },
-    },
   ],
 });

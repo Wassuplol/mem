@@ -64,11 +64,13 @@ const client = new Client({
   },
 });
 
+const ctx = { client, registry };
+
 /* ---------- wire module events ---------- */
 for (const event of registry.events()) {
   const handler = (...args: unknown[]) => {
     Promise.resolve()
-      .then(() => (event.execute as (...a: unknown[]) => unknown)(...args, { client }))
+      .then(() => (event.execute as (...a: unknown[]) => unknown)(...args, ctx))
       .catch((error) => console.error(`[mem] event "${String(event.name)}" failed:`, error));
   };
   if (event.once) {
@@ -93,20 +95,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
   try {
     if (interaction.isAutocomplete()) {
       const command = registry.commands().find((c) => c.data.name === interaction.commandName);
-      if (command?.autocomplete) await command.autocomplete(interaction, { client });
+      if (command?.autocomplete) await command.autocomplete(interaction, ctx);
       return;
     }
 
     if (interaction.isChatInputCommand()) {
       const command = registry.commands().find((c) => c.data.name === interaction.commandName);
       if (!command) return;
-      await command.execute(interaction, { client });
+      await command.execute(interaction, ctx);
       return;
     }
 
     if (interaction.isMessageComponent() || interaction.isModalSubmit()) {
       const handler = registry.components().find((h) => interaction.customId.startsWith(h.customIdPrefix));
-      if (handler) await handler.execute(interaction, { client });
+      if (handler) await handler.execute(interaction, ctx);
       return;
     }
   } catch (error) {

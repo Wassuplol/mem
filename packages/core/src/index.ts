@@ -20,6 +20,7 @@ export type AnySlashCommandBuilder =
 /** Runtime context passed to every command execution. */
 export interface ModuleContext {
   client: Client;
+  registry: ModuleRegistry;
 }
 
 /** A single slash command owned by a module. */
