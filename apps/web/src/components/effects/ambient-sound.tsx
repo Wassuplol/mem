@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { AUDIO_START_EVENT } from "@/lib/audio-bus";
 
 /**
  * Ambient soundscape: a soft synthesized pad (WebAudio, no assets) with a
@@ -69,6 +70,21 @@ export function AmbientSound() {
 
     master.gain.linearRampToValueAtTime(1, ctx.currentTime + 2.4);
   };
+
+  const enable = () => {
+    setOn(true);
+    window.localStorage.setItem("mem-sound", "1");
+    start();
+  };
+
+  useEffect(() => {
+    const onRequest = () => {
+      if (window.localStorage.getItem("mem-sound") !== "0") enable();
+    };
+    window.addEventListener(AUDIO_START_EVENT, onRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => window.removeEventListener(AUDIO_START_EVENT, onRequest);
+  }, []);
 
   const toggle = () => {
     const next = !on;

@@ -4,6 +4,8 @@ import { Canvas } from "@react-three/fiber";
 import { Component, type ReactNode } from "react";
 import { VrmModel, type MemiMode } from "./vrm-model";
 
+export type { MemiMode };
+
 const MODEL_URL = "/models/memi.vrm";
 
 /** If the VRM fails to load, degrade gracefully to a glowing orb. */
