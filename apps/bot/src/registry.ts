@@ -1,4 +1,5 @@
 import { ModuleRegistry } from "@mem/core";
+import { apikeysModule } from "./modules/apikeys";
 import { giveawaysModule } from "./modules/giveaways";
 import { helpModule } from "./modules/help";
 import { loggingModule } from "./modules/logging";
@@ -24,6 +25,7 @@ for (const feature of [
   remindersModule,
   giveawaysModule,
   temprolesModule,
+  apikeysModule,
 ]) {
   registry.register(feature);
 }

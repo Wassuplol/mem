@@ -32,7 +32,7 @@ The big incumbents charge for their best features. Mem's entire model is the opp
 - 🪶 **Light on RAM.** Cache-disciplined by design (message/presence caches off, member caches capped) — check `/botinfo` for the live number.
 - ⚡ **Built in a day.** 30+ commits, one developer (and one relentless AI agent), full test coverage of every shipped feature.
 
-## 🚀 Shipped (v0.1) — 31 commands · 9 modules
+## 🚀 Shipped (v0.1) — 35 commands · 12 modules
 
 | Module | What you get today |
 |---|---|
@@ -55,7 +55,10 @@ The big incumbents charge for their best features. Mem's entire model is the opp
 - Sign in with Discord (OAuth2, `identify` + `guilds`)
 - **Your servers** — Mem lists every server you can manage (verified against live guild permissions)
 - Session-backed API (`/api/guilds`) — the frontend and automation share one source of truth
+- **Public API v1** (`/api/v1`) — Bearer-key access to cases, giveaways, polls and warnings; create keys with `/apikey create`, docs at `/docs/api`
 - Per-server module pages are next on the roadmap
+
+> **🆓 Free hosting guide:** [docs/HOSTING.md](docs/HOSTING.md) — run the whole stack (bot + dashboard + Postgres + Redis) on **Oracle Cloud's Always Free tier** or **Northflank's** always-on sandbox. Zero cost, forever.
 
 ## ⚡ Quick start
 

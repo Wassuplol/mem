@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Brain, LayoutDashboard, Server } from "lucide-react";
+import { ArrowUpRight, Braces, Brain, LayoutDashboard, Server } from "lucide-react";
 import { GithubMark } from "./icons";
 import { MODULES } from "@/lib/modules";
 import { AuthChip } from "./auth-chip";
@@ -13,6 +13,7 @@ export const INVITE_URL =
 const NAV = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/servers", label: "Servers", icon: Server },
+  { href: "/docs/api", label: "API docs", icon: Braces },
 ];
 
 export function AppShell({

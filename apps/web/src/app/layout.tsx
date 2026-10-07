@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { MemiAssistant } from "@/components/memi/memi-assistant";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -23,6 +24,7 @@ export default function RootLayout({
           <div className="absolute inset-x-0 top-0 h-[70vh] bg-grid" />
         </div>
         <div className="relative z-10">{children}</div>
+        <MemiAssistant />
       </body>
     </html>
   );

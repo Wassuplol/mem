@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, desc, eq, isNotNull, isNull, lt, lte, ne, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
-import { giveawayEntries, giveaways, guildSettings, guilds, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, type Giveaway, type GiveawayEntry, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
+import { apiKeys, giveawayEntries, giveaways, guildSettings, guilds, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, type ApiKey, type Giveaway, type GiveawayEntry, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -601,6 +601,64 @@ export function createServices(db: Db) {
     async setGiveawayWinners(giveawayId: string, winners: string[]): Promise<Giveaway | null> {
       const rows = await db.update(giveaways).set({ winners }).where(eq(giveaways.id, giveawayId)).returning();
       return rows[0] ?? null;
+    },
+
+    /* ---------- public API keys ---------- */
+
+    /** Creates a key and returns the raw value exactly once (only the hash is stored). */
+    async createApiKey(input: {
+      guildId: string;
+      name: string;
+      createdBy: string;
+    }): Promise<{ row: ApiKey; rawKey: string }> {
+      const rawKey = `mem_${randomBytes(24).toString("hex")}`;
+      const keyHash = createHash("sha256").update(rawKey).digest("hex");
+      const [row] = await db
+        .insert(apiKeys)
+        .values({
+          id: randomUUID(),
+          guildId: input.guildId,
+          name: input.name,
+          keyHash,
+          keyPrefix: rawKey.slice(0, 12),
+          createdBy: input.createdBy,
+        })
+        .returning();
+      if (!row) throw new Error("Could not create API key");
+      return { row, rawKey };
+    },
+
+    /** Active (not revoked) keys of a guild, newest first. */
+    async listApiKeys(guildId: string): Promise<ApiKey[]> {
+      return db
+        .select()
+        .from(apiKeys)
+        .where(and(eq(apiKeys.guildId, guildId), isNull(apiKeys.revokedAt)))
+        .orderBy(desc(apiKeys.createdAt))
+        .limit(50);
+    },
+
+    async findApiKeyByHash(keyHash: string): Promise<ApiKey | null> {
+      const rows = await db
+        .select()
+        .from(apiKeys)
+        .where(and(eq(apiKeys.keyHash, keyHash), isNull(apiKeys.revokedAt)))
+        .limit(1);
+      return rows[0] ?? null;
+    },
+
+    async touchApiKey(keyId: string): Promise<void> {
+      await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, keyId));
+    },
+
+    /** Revoke (soft-delete) a key; false when missing, not theirs, or already revoked. */
+    async revokeApiKey(guildId: string, keyId: string): Promise<boolean> {
+      const rows = await db
+        .update(apiKeys)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(apiKeys.id, keyId), eq(apiKeys.guildId, guildId), isNull(apiKeys.revokedAt)))
+        .returning({ id: apiKeys.id });
+      return rows.length > 0;
     },
   };
 }

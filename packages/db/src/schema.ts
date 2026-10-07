@@ -207,4 +207,23 @@ export const giveawayEntries = pgTable(
 
 export type GiveawayEntry = typeof giveawayEntries.$inferSelect;
 
+/** Public API keys for /api/v1 (stored as SHA-256 hashes; the raw key is shown once). */
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    name: text("name").notNull(),
+    keyHash: text("key_hash").notNull(),
+    keyPrefix: text("key_prefix").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("api_keys_hash_idx").on(t.keyHash), index("api_keys_guild_idx").on(t.guildId)],
+);
+
+export type ApiKey = typeof apiKeys.$inferSelect;
+
 export * from "./schema/auth";
