@@ -8,6 +8,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   type ButtonInteraction,
+  type Client,
   type EmbedBuilder,
   type ModalSubmitInteraction,
 } from "discord.js";
@@ -26,11 +27,17 @@ const truncate = (text: string, max: number): string => (text.length <= max ? te
 
 const isExpired = (poll: Poll): boolean => poll.endsAt !== null && poll.endsAt.getTime() <= Date.now();
 
+/** Resolve a human-readable author label (never show raw IDs). */
+async function authorLabel(client: Client, authorId: string): Promise<string> {
+  const user = await client.users.fetch(authorId).catch(() => null);
+  return user?.displayName ?? "someone";
+}
+
 /** Shared renderer: live polish embed + vote buttons (or the frozen final view). */
 function renderPoll(
   poll: Poll,
   tally: PollTally,
-  opts: { closed: boolean },
+  opts: { closed: boolean; author: string },
 ): { embeds: EmbedBuilder[]; components: ActionRowBuilder<ButtonBuilder>[] } {
   const lines = poll.options.map((label, idx) => {
     const count = tally.counts[idx] ?? 0;
@@ -41,6 +48,14 @@ function renderPoll(
     return `**${idx + 1}.** ${label}${crown}\n\`${bar}\` **${count}** · ${pct}%`;
   });
   if (poll.multiple) lines.push("", "*Multi-select - toggle as many as you like.*");
+  if (poll.endsAt) {
+    const stamp = Math.floor(poll.endsAt.getTime() / 1000);
+    lines.push("", opts.closed ? `🏁 Closed <t:${stamp}:R>` : `⏳ Closes <t:${stamp}:R>`);
+  } else if (opts.closed) {
+    lines.push("", "🏁 Closed");
+  } else {
+    lines.push("", "⏳ No time limit - ends manually.");
+  }
 
   const builder = embed({
     title: `📊 ${truncate(poll.question, 240)}`,
@@ -48,12 +63,9 @@ function renderPoll(
     color: opts.closed ? COLORS.neutral : COLORS.brand,
   });
 
-  const meta = [`By <@${poll.authorId}>`, `${tally.voterCount} voter(s) · ${tally.totalVotes} vote(s)`];
-  if (poll.endsAt) {
-    const stamp = Math.floor(poll.endsAt.getTime() / 1000);
-    meta.push(opts.closed ? "closed" : `closes <t:${stamp}:R>`);
-  }
-  builder.setFooter({ text: meta.join(" · ") });
+  builder.setFooter({
+    text: [`By ${opts.author}`, `${tally.voterCount} voter(s) · ${tally.totalVotes} vote(s)`].join(" · "),
+  });
 
   if (opts.closed) return { embeds: [builder], components: [] };
 
@@ -95,13 +107,17 @@ async function onVote(interaction: ButtonInteraction, pollId: string, optionInde
   const closed = await freezeIfExpired(poll);
   if (closed) {
     const tally = await services.getPollTally(poll.id);
-    await interaction.update(renderPoll(poll, tally, { closed: true }));
+    await interaction.update(
+      renderPoll(poll, tally, { closed: true, author: await authorLabel(interaction.client, poll.authorId) }),
+    );
     return;
   }
   if (optionIndex < 0 || optionIndex >= poll.options.length) return;
   await services.votePoll(poll.id, interaction.user.id, optionIndex);
   const tally = await services.getPollTally(poll.id);
-  await interaction.update(renderPoll(poll, tally, { closed: false }));
+  await interaction.update(
+    renderPoll(poll, tally, { closed: false, author: await authorLabel(interaction.client, poll.authorId) }),
+  );
 }
 
 async function onEndButton(interaction: ButtonInteraction, pollId: string): Promise<void> {
@@ -118,7 +134,9 @@ async function onEndButton(interaction: ButtonInteraction, pollId: string): Prom
   }
   if (!poll.closed) await services.closePoll(poll.id);
   const tally = await services.getPollTally(poll.id);
-  await interaction.update(renderPoll(poll, tally, { closed: true }));
+  await interaction.update(
+    renderPoll(poll, tally, { closed: true, author: await authorLabel(interaction.client, poll.authorId) }),
+  );
 }
 
 async function onCreateModal(interaction: ModalSubmitInteraction): Promise<void> {
@@ -163,7 +181,9 @@ async function onCreateModal(interaction: ModalSubmitInteraction): Promise<void>
   });
 
   const tally = await services.getPollTally(poll.id);
-  await interaction.reply(renderPoll(poll, tally, { closed: false }));
+  await interaction.reply(
+    renderPoll(poll, tally, { closed: false, author: interaction.user.displayName ?? interaction.user.username }),
+  );
   try {
     const message = await interaction.fetchReply();
     await services.attachPollMessage(poll.id, message.id);
@@ -245,7 +265,9 @@ const pollCommand: SlashCommand = {
         const channel = await i.client.channels.fetch(channelId);
         if (channel?.isTextBased()) {
           const message = await channel.messages.fetch(messageId);
-          await message.edit(renderPoll(poll, tally, { closed: true }));
+          await message.edit(
+            renderPoll(poll, tally, { closed: true, author: await authorLabel(i.client, poll.authorId) }),
+          );
         }
       } catch (error) {
         console.warn("[mem] poll end: could not edit poll message:", error);
