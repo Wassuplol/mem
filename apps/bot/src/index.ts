@@ -4,7 +4,7 @@ import { ModuleRegistry, type ModuleContext } from "@mem/core";
 import { pingModule } from "./modules/ping";
 
 const token = process.env.DISCORD_TOKEN;
-const appId = process.env.DISCORD_APP_ID;
+const clientId = process.env.DISCORD_CLIENT_ID;
 const devGuildId = process.env.DEV_GUILD_ID;
 
 if (!token) {
@@ -55,14 +55,14 @@ async function registerCommands(): Promise<void> {
 
   const rest = new REST().setToken(botToken);
   try {
-    if (appId && devGuildId) {
-      await rest.put(Routes.applicationGuildCommands(appId, devGuildId), { body });
+    if (clientId && devGuildId) {
+      await rest.put(Routes.applicationGuildCommands(clientId, devGuildId), { body });
       console.log(`[mem] registered ${body.length} guild command(s) in ${devGuildId}`);
-    } else if (appId) {
-      await rest.put(Routes.applicationCommands(appId), { body });
+    } else if (clientId) {
+      await rest.put(Routes.applicationCommands(clientId), { body });
       console.log(`[mem] registered ${body.length} global command(s)`);
     } else {
-      console.warn("[mem] DISCORD_APP_ID missing - skipped command registration");
+      console.warn("[mem] DISCORD_CLIENT_ID missing - skipped command registration");
     }
   } catch (error) {
     console.error("[mem] command registration failed:", error);

@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -12,6 +11,8 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // compile workspace TS packages with the app (they ship as source)
+  transpilePackages: ["@mem/db"],
 };
 
 export default nextConfig;

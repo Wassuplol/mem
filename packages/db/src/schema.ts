@@ -22,3 +22,5 @@ export const guildSettings = pgTable(
   },
   (t) => [primaryKey({ columns: [t.guildId, t.moduleId] })],
 );
+
+export * from "./schema/auth";

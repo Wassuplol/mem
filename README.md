@@ -22,7 +22,7 @@ A next-generation community-management Discord bot — **your server's memory** 
 ## Quick start
 ```bash
 pnpm install
-cp .env.example .env   # fill in DISCORD_TOKEN + DISCORD_APP_ID
+cp .env.example .env   # fill in DISCORD_TOKEN + DISCORD_CLIENT_ID
 pnpm infra:up          # Postgres + Redis via Docker
 pnpm dev:bot           # bot login (+ instant /ping in your dev guild)
 ```
