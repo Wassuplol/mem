@@ -76,6 +76,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "$URL" main
 - Target < 200 MB RSS with a handful of guilds; commands are thin wrappers, heavy logic lives in shared services so the dashboard API can reuse it. Verify via /botinfo once the real bot runs.
 
 ## Run log
+- Run 7.0 (live, ~22:20): durable scheduler (scheduled_tasks + 30s scan + 3 kinds: tempban_unban, temprole_remove, giveaway_end) · /tempban · /temprole add|list|remove · giveaways module (/giveaway start|end|reroll|list, gw: button entries, throttled live counter, crypto-random auto-draw, reroll-excludes-previous). 34 cmds / 11 modules / 4 components. scheduler+giveaway smokes green; live relaunched.
 - Run 6.8 (live, ~22:00): repo made PUBLIC (security sweep clean; desc + 10 topics set; logged-out verified 200). auth-chip: real Discord avatar image + smart initial fallback (skips decorative glyphs).
 - Run 6.7 (live, ~20:30-21:40): dashboard redesign v2 - Lucide icon set, glass/gradient design system (globals.css), app shell (sidebar+topbar), redesigned overview/servers/landing; vision-QA'd (8.5/10 servers, landing fixes applied); README dashboard shot refreshed.
 - Run 6.6 (live, ~19:30-19:50): /poll polish shipped (author display name instead of raw <@id>; timing moved to embed description: 'Closes <t:R>' / 'No time limit' / 'Closed <t:R>'); members intent ON (portal flags verified, .env ENABLE_MEMBERS_INTENT=1); bot restarted (Windows tree-kill lesson logged above).

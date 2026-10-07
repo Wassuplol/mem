@@ -6,8 +6,10 @@ import {
 } from "discord.js";
 import { defineModule } from "@mem/core";
 import { COLORS, embed } from "../lib/embed";
-import { ensureGuild, requirePermissions } from "../lib/permissions";
+import { formatDuration, parseDuration } from "../lib/duration";
+import { ensureGuild, requirePermissions, UserError } from "../lib/permissions";
 import { services } from "../lib/services";
+import { registerTaskHandler } from "../lib/scheduler";
 
 type Cached = ChatInputCommandInteraction<"cached">;
 
@@ -51,6 +53,24 @@ async function applyUntimeout(i: Cached): Promise<void> {
     embeds: [embed({ color: COLORS.success, description: `${member.user}'s timeout was removed.` })],
   });
 }
+
+/* ---------- auto-unban for /tempban (scheduler kind) ---------- */
+
+registerTaskHandler("tempban_unban", async (payload, client) => {
+  const guildId = typeof payload.guildId === "string" ? payload.guildId : null;
+  const userId = typeof payload.userId === "string" ? payload.userId : null;
+  if (!guildId || !userId) return;
+  const guild = await client.guilds.fetch(guildId).catch(() => null);
+  if (!guild) return;
+  await guild.bans.remove(userId, "Tempban expired").catch(() => undefined);
+  await services.createCase({
+    guildId,
+    action: "unban",
+    targetId: userId,
+    moderatorId: client.user?.id ?? "0",
+    reason: "Tempban expired",
+  });
+});
 
 export const moderationModule = defineModule({
   id: "moderation",
@@ -287,6 +307,52 @@ export const moderationModule = defineModule({
               color: COLORS.success,
               title: `Unban #${record.caseNumber}`,
               description: `<@${userId}> was unbanned.\n**Reason:** ${reason}`,
+            }),
+          ],
+        });
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
+        .setName("tempban")
+        .setDescription("Ban a user for a set time - unbanned automatically.")
+        .addUserOption((o) => o.setName("user").setDescription("User to ban").setRequired(true))
+        .addStringOption((o) => o.setName("duration").setDescription("How long: 1h, 2d, 1w...").setRequired(true))
+        .addStringOption((o) => o.setName("reason").setDescription("Reason").setMaxLength(500)),
+      async execute(interaction) {
+        const i = await ensureGuild(interaction);
+        if (!(await requirePermissions(i, PermissionFlagsBits.BanMembers))) return;
+        const target = i.options.getUser("user", true);
+        if (target.id === i.user.id) throw new UserError("You cannot ban yourself.");
+        const durMs = parseDuration(i.options.getString("duration", true));
+        if (durMs === null) throw new UserError("Could not read that duration - try `1h`, `2d` or `1w`.");
+        if (durMs < 60_000) throw new UserError("Minimum tempban is 1 minute.");
+        if (durMs > 365 * 86_400_000) throw new UserError("Maximum tempban is 365 days.");
+        const reason = i.options.getString("reason") ?? "No reason provided";
+        const unbanAt = new Date(Date.now() + durMs);
+        await i.guild.members.ban(target.id, {
+          reason: `${reason} (tempban ${formatDuration(durMs)} by ${i.user.tag})`,
+        });
+        const record = await services.createCase({
+          guildId: i.guild.id,
+          action: "tempban",
+          targetId: target.id,
+          moderatorId: i.user.id,
+          reason,
+        });
+        await services.scheduleTask({
+          guildId: i.guild.id,
+          kind: "tempban_unban",
+          payload: { guildId: i.guild.id, userId: target.id },
+          runAt: unbanAt,
+        });
+        const stamp = Math.floor(unbanAt.getTime() / 1_000);
+        await i.reply({
+          embeds: [
+            embed({
+              color: COLORS.error,
+              title: `Tempban #${record.caseNumber}`,
+              description: `${target.tag} was banned for **${formatDuration(durMs)}** - auto-unban <t:${stamp}:R>.\n**Reason:** ${reason}`,
             }),
           ],
         });

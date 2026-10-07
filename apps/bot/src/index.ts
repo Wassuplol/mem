@@ -16,6 +16,7 @@ import { config } from "./lib/config";
 import { UserError } from "./lib/permissions";
 import { services } from "./lib/services";
 import { registry } from "./registry";
+import { startScheduler } from "./lib/scheduler";
 
 console.log(
   `[mem] ${registry.commands().length} command(s), ${registry.events().length} event(s), ${registry.components().length} component handler(s) across ${registry.list().length} module(s)`,
@@ -81,6 +82,7 @@ for (const event of registry.events()) {
 
 client.once(Events.ClientReady, async (readyClient) => {
   console.log(`[mem] online as ${readyClient.user.tag} - ${readyClient.guilds.cache.size} guild(s)`);
+  startScheduler(readyClient);
   await registerCommands();
 });
 

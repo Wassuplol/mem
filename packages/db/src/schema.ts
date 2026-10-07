@@ -135,4 +135,76 @@ export const reminders = pgTable(
 
 export type Reminder = typeof reminders.$inferSelect;
 
+/** Generic durable tasks (tempban unbans, temp-role removals, giveaway ends...). */
+export const scheduledTasks = pgTable(
+  "scheduled_tasks",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id"),
+    kind: text("kind").notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    runAt: timestamp("run_at", { withTimezone: true }).notNull(),
+    status: text("status").notNull().default("pending"), // pending | done | failed
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+  },
+  (t) => [index("scheduled_tasks_due_idx").on(t.status, t.runAt)],
+);
+
+export type ScheduledTask = typeof scheduledTasks.$inferSelect;
+
+/** Temp roles: granted now, removed by a scheduled task at expiry. */
+export const tempRoles = pgTable(
+  "temp_roles",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    userId: text("user_id").notNull(),
+    roleId: text("role_id").notNull(),
+    taskId: text("task_id").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("temp_roles_guild_user_idx").on(t.guildId, t.userId)],
+);
+
+export type TempRole = typeof tempRoles.$inferSelect;
+
+/** Giveaways: one row per giveaway card message. */
+export const giveaways = pgTable(
+  "giveaways",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    channelId: text("channel_id").notNull(),
+    messageId: text("message_id"),
+    hostId: text("host_id").notNull(),
+    prize: text("prize").notNull(),
+    winnerCount: integer("winner_count").notNull().default(1),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    ended: boolean("ended").notNull().default(false),
+    winners: jsonb("winners").$type<string[]>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("giveaways_guild_idx").on(t.guildId), index("giveaways_message_idx").on(t.messageId)],
+);
+
+export type Giveaway = typeof giveaways.$inferSelect;
+
+/** One row per (giveaway, user); clicking the button toggles it. */
+export const giveawayEntries = pgTable(
+  "giveaway_entries",
+  {
+    giveawayId: text("giveaway_id")
+      .notNull()
+      .references(() => giveaways.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.giveawayId, t.userId] })],
+);
+
+export type GiveawayEntry = typeof giveawayEntries.$inferSelect;
+
 export * from "./schema/auth";

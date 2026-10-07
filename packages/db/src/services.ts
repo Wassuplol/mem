@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, isNotNull, isNull, lt, lte, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, lt, lte, ne, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
-import { guildSettings, guilds, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry } from "./schema";
+import { giveawayEntries, giveaways, guildSettings, guilds, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, type Giveaway, type GiveawayEntry, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -397,6 +397,210 @@ export function createServices(db: Db) {
         .where(and(isNotNull(reminders.sentAt), lt(reminders.sentAt, cutoff)))
         .returning({ id: reminders.id });
       return rows.length;
+    },
+
+    /* ---------- scheduler (durable timers) ---------- */
+
+    async scheduleTask(input: {
+      guildId?: string | null;
+      kind: string;
+      payload: Record<string, unknown>;
+      runAt: Date;
+    }): Promise<ScheduledTask> {
+      const [row] = await db
+        .insert(scheduledTasks)
+        .values({
+          id: randomUUID(),
+          guildId: input.guildId ?? null,
+          kind: input.kind,
+          payload: input.payload,
+          runAt: input.runAt,
+        })
+        .returning();
+      if (!row) throw new Error("Could not schedule task");
+      return row;
+    },
+
+    async getTask(taskId: string): Promise<ScheduledTask | null> {
+      const rows = await db.select().from(scheduledTasks).where(eq(scheduledTasks.id, taskId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Pending tasks whose time has come - oldest first (the bot's scan drains these). */
+    async listDueTasks(limit = 25): Promise<ScheduledTask[]> {
+      return db
+        .select()
+        .from(scheduledTasks)
+        .where(and(eq(scheduledTasks.status, "pending"), lte(scheduledTasks.runAt, new Date())))
+        .orderBy(scheduledTasks.runAt)
+        .limit(Math.min(Math.max(limit, 1), 50));
+    },
+
+    async markTaskDone(taskId: string): Promise<void> {
+      await db.update(scheduledTasks).set({ status: "done", doneAt: new Date() }).where(eq(scheduledTasks.id, taskId));
+    },
+
+    async markTaskFailed(taskId: string, error: string): Promise<void> {
+      await db
+        .update(scheduledTasks)
+        .set({ status: "failed", error: error.slice(0, 500), doneAt: new Date() })
+        .where(eq(scheduledTasks.id, taskId));
+    },
+
+    /** Patch a task's payload (used when the id it references is created after it). */
+    async setTaskPayload(taskId: string, payload: Record<string, unknown>): Promise<void> {
+      await db.update(scheduledTasks).set({ payload }).where(eq(scheduledTasks.id, taskId));
+    },
+
+    /** Drop a still-pending task (its effect was cancelled). */
+    async cancelTask(taskId: string): Promise<boolean> {
+      const rows = await db
+        .delete(scheduledTasks)
+        .where(and(eq(scheduledTasks.id, taskId), eq(scheduledTasks.status, "pending")))
+        .returning({ id: scheduledTasks.id });
+      return rows.length > 0;
+    },
+
+    /** Drop finished tasks older than N days so the table stays small. */
+    async purgeTasks(olderThanDays = 30): Promise<number> {
+      const cutoff = new Date(Date.now() - olderThanDays * 86_400_000);
+      const rows = await db
+        .delete(scheduledTasks)
+        .where(and(ne(scheduledTasks.status, "pending"), lt(scheduledTasks.doneAt, cutoff)))
+        .returning({ id: scheduledTasks.id });
+      return rows.length;
+    },
+
+    /* ---------- temp roles ---------- */
+
+    async createTempRole(input: {
+      guildId: string;
+      userId: string;
+      roleId: string;
+      taskId: string;
+      expiresAt: Date;
+    }): Promise<TempRole> {
+      const [row] = await db
+        .insert(tempRoles)
+        .values({ id: randomUUID(), ...input })
+        .returning();
+      if (!row) throw new Error("Could not create temp role");
+      return row;
+    },
+
+    async getTempRole(tempRoleId: string): Promise<TempRole | null> {
+      const rows = await db.select().from(tempRoles).where(eq(tempRoles.id, tempRoleId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Active temp roles in a guild, soonest expiry first; optionally for one member. */
+    async listTempRoles(guildId: string, opts: { userId?: string; limit?: number } = {}): Promise<TempRole[]> {
+      const where = opts.userId
+        ? and(eq(tempRoles.guildId, guildId), eq(tempRoles.userId, opts.userId))
+        : eq(tempRoles.guildId, guildId);
+      return db
+        .select()
+        .from(tempRoles)
+        .where(where)
+        .orderBy(tempRoles.expiresAt)
+        .limit(Math.min(Math.max(opts.limit ?? 25, 1), 50));
+    },
+
+    /** Remove a temp-role row; returns the removed row (or null). */
+    async removeTempRole(tempRoleId: string): Promise<TempRole | null> {
+      const rows = await db.delete(tempRoles).where(eq(tempRoles.id, tempRoleId)).returning();
+      return rows[0] ?? null;
+    },
+
+    /* ---------- giveaways ---------- */
+
+    async createGiveaway(input: {
+      guildId: string;
+      channelId: string;
+      hostId: string;
+      prize: string;
+      winnerCount: number;
+      endsAt: Date;
+    }): Promise<Giveaway> {
+      const [row] = await db
+        .insert(giveaways)
+        .values({ id: randomUUID(), ...input })
+        .returning();
+      if (!row) throw new Error("Could not create giveaway");
+      return row;
+    },
+
+    async attachGiveawayMessage(giveawayId: string, messageId: string): Promise<void> {
+      await db.update(giveaways).set({ messageId }).where(eq(giveaways.id, giveawayId));
+    },
+
+    async getGiveaway(giveawayId: string): Promise<Giveaway | null> {
+      const rows = await db.select().from(giveaways).where(eq(giveaways.id, giveawayId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    async getGiveawayByMessage(messageId: string): Promise<Giveaway | null> {
+      const rows = await db.select().from(giveaways).where(eq(giveaways.messageId, messageId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Guild giveaways, newest first; openOnly filters to running ones. */
+    async listGiveaways(guildId: string, opts: { openOnly?: boolean; limit?: number } = {}): Promise<Giveaway[]> {
+      const where = opts.openOnly
+        ? and(eq(giveaways.guildId, guildId), eq(giveaways.ended, false))
+        : eq(giveaways.guildId, guildId);
+      return db
+        .select()
+        .from(giveaways)
+        .where(where)
+        .orderBy(desc(giveaways.createdAt))
+        .limit(Math.min(Math.max(opts.limit ?? 10, 1), 25));
+    },
+
+    /** Toggle an entry; throws when the giveaway is missing or already ended. */
+    async toggleGiveawayEntry(giveawayId: string, userId: string): Promise<"entered" | "left"> {
+      return db.transaction(async (tx) => {
+        const rows = await tx.select().from(giveaways).where(eq(giveaways.id, giveawayId)).limit(1);
+        const giveaway = rows[0];
+        if (!giveaway) throw new Error("Giveaway not found");
+        if (giveaway.ended) throw new Error("Giveaway already ended");
+        const mine = and(eq(giveawayEntries.giveawayId, giveawayId), eq(giveawayEntries.userId, userId));
+        const existing = await tx.select().from(giveawayEntries).where(mine).limit(1);
+        if (existing.length > 0) {
+          await tx.delete(giveawayEntries).where(mine);
+          return "left" as const;
+        }
+        await tx.insert(giveawayEntries).values({ giveawayId, userId });
+        return "entered" as const;
+      });
+    },
+
+    async countGiveawayEntries(giveawayId: string): Promise<number> {
+      const rows = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(giveawayEntries)
+        .where(eq(giveawayEntries.giveawayId, giveawayId));
+      return Number(rows[0]?.count ?? 0);
+    },
+
+    async listGiveawayEntries(giveawayId: string): Promise<GiveawayEntry[]> {
+      return db.select().from(giveawayEntries).where(eq(giveawayEntries.giveawayId, giveawayId));
+    },
+
+    /** Freeze winners - only when still open; null when it was already ended. */
+    async finishGiveaway(giveawayId: string, winners: string[]): Promise<Giveaway | null> {
+      const rows = await db
+        .update(giveaways)
+        .set({ ended: true, winners })
+        .where(and(eq(giveaways.id, giveawayId), eq(giveaways.ended, false)))
+        .returning();
+      return rows[0] ?? null;
+    },
+
+    /** Replace the winners of an ended giveaway (reroll). */
+    async setGiveawayWinners(giveawayId: string, winners: string[]): Promise<Giveaway | null> {
+      const rows = await db.update(giveaways).set({ winners }).where(eq(giveaways.id, giveawayId)).returning();
+      return rows[0] ?? null;
     },
   };
 }
