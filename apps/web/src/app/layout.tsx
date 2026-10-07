@@ -4,6 +4,10 @@ import "./globals.css";
 import { MemiAssistant } from "@/components/memi/memi-assistant";
 import { CursorGlow } from "@/components/effects/cursor-glow";
 import { FilmGrain } from "@/components/effects/film-grain";
+import { BootSplash } from "@/components/effects/boot-splash";
+import { AmbientSound } from "@/components/effects/ambient-sound";
+import { ParallaxBg } from "@/components/effects/parallax-bg";
+import { ScrollProgress } from "@/components/effects/scroll-progress";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -21,16 +25,20 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {/* ambient background */}
         <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-          <div className="absolute -left-48 -top-48 h-[620px] w-[620px] rounded-full bg-violet-600/20 blur-[150px]" />
-          <div className="absolute -bottom-56 -right-40 h-[560px] w-[560px] rounded-full bg-cyan-500/10 blur-[160px]" />
-          <div className="stars absolute inset-0" />
-          <div className="stars-b absolute inset-0" />
+          <div className="parallax-a absolute -left-48 -top-48 h-[620px] w-[620px] rounded-full bg-violet-600/20 blur-[150px]" />
+          <div className="parallax-b absolute -bottom-56 -right-40 h-[560px] w-[560px] rounded-full bg-cyan-500/10 blur-[160px]" />
+          <div className="stars parallax-a absolute inset-0" />
+          <div className="stars-b parallax-b absolute inset-0" />
           <div className="absolute inset-x-0 top-0 h-[70vh] bg-grid" />
         </div>
         <div className="relative z-10">{children}</div>
         <MemiAssistant />
         <CursorGlow />
         <FilmGrain />
+        <BootSplash />
+        <AmbientSound />
+        <ParallaxBg />
+        <ScrollProgress />
       </body>
     </html>
   );

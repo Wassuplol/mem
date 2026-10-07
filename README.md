@@ -56,7 +56,7 @@ The big incumbents charge for their best features. Mem's entire model is the opp
 - **Your servers** — Mem lists every server you can manage (verified against live guild permissions)
 - Session-backed API (`/api/guilds`) — the frontend and automation share one source of truth
 - **Public API v1** (`/api/v1`) — Bearer-key access to cases, giveaways, polls and warnings; create keys with `/apikey create`, docs at `/docs/api`
-- **Memi** — a 3D VTuber-style companion (VRoid VRM avatar + NVIDIA NIM brain) who floats in the dashboard, chats, and walks you to any page
+- **Memi** — a 3D VTuber-style companion (VRoid VRM avatar, idle/talking/thinking animations, NVIDIA NIM brain) who floats in the dashboard, chats, and walks you to any page
 - Per-server module pages are next on the roadmap
 
 > **🆓 Free hosting guide:** [docs/HOSTING.md](docs/HOSTING.md) — run the whole stack (bot + dashboard + Postgres + Redis) on **Oracle Cloud's Always Free tier** or **Northflank's** always-on sandbox. Zero cost, forever.

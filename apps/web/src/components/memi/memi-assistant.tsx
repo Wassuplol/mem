@@ -226,7 +226,7 @@ export function MemiAssistant() {
             className="absolute inset-x-2 bottom-1 top-7 rounded-full bg-[radial-gradient(circle_at_50%_45%,rgba(139,92,246,0.22),transparent_70%)] blur-xl"
           />
           {webgl ? (
-            <ChibiCanvas thinking={busy} />
+            <ChibiCanvas mode={busy ? "thinking" : open ? "talking" : "idle"} />
           ) : (
             <span className="flex h-full w-full items-end justify-center pb-6">
               <span className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/60 to-cyan-500/40 text-4xl shadow-lg shadow-violet-900/40">

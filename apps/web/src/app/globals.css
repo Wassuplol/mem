@@ -161,3 +161,8 @@ body {
   50% { transform: translateY(7px); opacity: 1; }
 }
 .animate-scroll-hint { animation: scroll-hint 1.9s ease-in-out infinite; }
+
+/* cursor-driven parallax for ambient layers */
+.parallax-a { transform: translate3d(calc(var(--px, 0) * 16px), calc(var(--py, 0) * 12px), 0); }
+.parallax-b { transform: translate3d(calc(var(--px, 0) * -26px), calc(var(--py, 0) * -18px), 0); }
+.parallax-c { transform: translate3d(calc(var(--px, 0) * 8px), calc(var(--py, 0) * 6px), 0); }

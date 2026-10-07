@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { Component, type ReactNode } from "react";
-import { VrmModel } from "./vrm-model";
+import { VrmModel, type MemiMode } from "./vrm-model";
 
 const MODEL_URL = "/models/memi.vrm";
 
@@ -28,19 +28,19 @@ class VrmBoundary extends Component<{ children: ReactNode }, { failed: boolean }
   }
 }
 
-/** Memi - the VRM avatar (VTuber model), posed and animated. */
-export function Chibi({ thinking, position = [0, 0, 0] }: { thinking: boolean; position?: [number, number, number] }) {
+/** Memi - the VRM avatar (VTuber model), animated. */
+export function Chibi({ mode = "idle", position = [0, 0, 0] }: { mode?: MemiMode; position?: [number, number, number] }) {
   return (
     <group position={position}>
       <VrmBoundary>
-        <VrmModel url={MODEL_URL} thinking={thinking} />
+        <VrmModel mode={mode} />
       </VrmBoundary>
     </group>
   );
 }
 
 /** Widget canvas - bust framing (head + shoulders), like a VTuber stream overlay. */
-export function ChibiCanvas({ thinking }: { thinking: boolean }) {
+export function ChibiCanvas({ mode = "idle" }: { mode?: MemiMode }) {
   return (
     <Canvas
       camera={{ position: [0, 1.55, 1.23], fov: 34 }}
@@ -53,7 +53,7 @@ export function ChibiCanvas({ thinking }: { thinking: boolean }) {
       <directionalLight position={[2, 3, 2.5]} intensity={1.85} />
       <pointLight position={[-2.4, 1.6, -1.5]} intensity={0.8} color="#22d3ee" />
       <pointLight position={[2.4, 0.8, 1.5]} intensity={0.5} color="#8b5cf6" />
-      <Chibi thinking={thinking} />
+      <Chibi mode={mode} />
     </Canvas>
   );
 }

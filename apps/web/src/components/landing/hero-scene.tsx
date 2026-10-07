@@ -90,7 +90,7 @@ export function HeroScene() {
         <Stars count={520} radius={7} color="#a78bfa" size={0.035} />
         <Stars count={260} radius={5} color="#22d3ee" size={0.028} opacity={0.65} />
         <group scale={1.05} position={[0.92, 0, 0]}>
-          <Chibi thinking={false} />
+          <Chibi mode="idle" />
         </group>
       </Rig>
     </Canvas>
