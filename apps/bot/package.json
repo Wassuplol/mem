@@ -1,0 +1,22 @@
+{
+  "name": "@mem/bot",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Mem Discord bot process (discord.js + @mem/core kernel).",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mem/core": "workspace:*",
+    "discord.js": "^14.27.0",
+    "dotenv": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3"
+  }
+}

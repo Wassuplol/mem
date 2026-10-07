@@ -1,0 +1,16 @@
+{
+  "name": "mem",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Mem - community-management Discord bot: modular core + integrated web dashboard. Everything free.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "dev:bot": "pnpm --filter @mem/bot dev",
+    "infra:up": "docker compose up -d postgres redis",
+    "infra:down": "docker compose down"
+  }
+}

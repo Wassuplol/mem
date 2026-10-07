@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "plugins/*"
+
+# pnpm 11: build-script approvals (strictDepBuilds=true fails installs on unreviewed builds)
+allowBuilds:
+  esbuild: true
