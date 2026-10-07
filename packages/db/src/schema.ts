@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 /** Discord guilds Mem has seen. */
 export const guilds = pgTable("guilds", {
@@ -22,5 +22,27 @@ export const guildSettings = pgTable(
   },
   (t) => [primaryKey({ columns: [t.guildId, t.moduleId] })],
 );
+
+/** Moderation cases: one row per action (warn, timeout, kick, ban, unban, note...). */
+export const modCases = pgTable(
+  "mod_cases",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    caseNumber: integer("case_number").notNull(),
+    action: text("action").notNull(),
+    targetId: text("target_id").notNull(),
+    moderatorId: text("moderator_id").notNull(),
+    reason: text("reason"),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("mod_cases_guild_number_idx").on(t.guildId, t.caseNumber),
+    index("mod_cases_guild_target_idx").on(t.guildId, t.targetId),
+  ],
+);
+
+export type ModCase = typeof modCases.$inferSelect;
 
 export * from "./schema/auth";

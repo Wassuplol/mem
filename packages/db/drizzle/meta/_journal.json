@@ -15,6 +15,13 @@
       "when": 1791363564069,
       "tag": "0001_futuristic_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791375918867,
+      "tag": "0002_parched_klaw",
+      "breakpoints": true
     }
   ]
 }

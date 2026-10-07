@@ -13,6 +13,9 @@ importers:
       '@mem/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@mem/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       discord.js:
         specifier: ^14.27.0
         version: 14.27.0

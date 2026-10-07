@@ -1,39 +1,64 @@
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import "./lib/env";
 
-// monorepo: read the shared root .env (works from apps/bot and from the repo root)
-for (const candidate of [resolve(".env"), resolve("../../.env")]) {
-  if (existsSync(candidate)) {
-    process.loadEnvFile(candidate);
-    break;
-  }
-}
-import { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes, type InteractionReplyOptions } from "discord.js";
-import { ModuleRegistry, type ModuleContext } from "@mem/core";
-import { pingModule } from "./modules/ping";
+import {
+  Client,
+  Events,
+  GatewayIntentBits,
+  MessageFlags,
+  Options,
+  REST,
+  Routes,
+  type InteractionReplyOptions,
+} from "discord.js";
+import { config } from "./lib/config";
+import { UserError } from "./lib/permissions";
+import { services } from "./lib/services";
+import { registry } from "./registry";
 
-const token = process.env.DISCORD_TOKEN;
-const clientId = process.env.DISCORD_CLIENT_ID;
-const devGuildId = process.env.DEV_GUILD_ID;
+console.log(`[mem] ${registry.commands().length} command(s) across ${registry.list().length} module(s)`);
 
-if (!token) {
+if (!config.token) {
   console.error("[mem] DISCORD_TOKEN is missing - copy .env.example to .env and fill it in.");
   process.exit(1);
 }
-const botToken: string = token;
+const botToken: string = config.token;
 
-const registry = new ModuleRegistry();
-registry.register(pingModule);
-
+/**
+ * RAM-conscious cache configuration (owner requirement: keep the bot lean).
+ * - messages / presences / reactions / events: not cached (swept aggressively)
+ * - members & users: capped at 100 per guild/user cache
+ * All durable state lives in Postgres/Redis - nothing grows in memory.
+ */
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  makeCache: Options.cacheWithLimits({
+    ...Options.DefaultMakeCacheSettings,
+    MessageManager: 0,
+    PresenceManager: 0,
+    ReactionManager: 0,
+    GuildScheduledEventManager: 0,
+    GuildStickerManager: 0,
+    ThreadMemberManager: 0,
+    StageInstanceManager: 0,
+    VoiceStateManager: 0,
+    GuildMemberManager: { maxSize: 100, keepOverLimit: (member) => member.id === member.client.user?.id },
+    UserManager: { maxSize: 100, keepOverLimit: (user) => user.id === user.client.user?.id },
+  }),
+  sweepers: {
+    ...Options.DefaultSweeperSettings,
+    messages: { interval: 300, lifetime: 900 },
+  },
 });
-
-const ctx: ModuleContext = { client };
 
 client.once(Events.ClientReady, async (readyClient) => {
   console.log(`[mem] online as ${readyClient.user.tag} - ${readyClient.guilds.cache.size} guild(s)`);
   await registerCommands();
+});
+
+client.on(Events.GuildCreate, (guild) => {
+  void services.ensureGuild(guild.id, guild.name).catch((error) => {
+    console.error("[mem] ensureGuild failed:", error);
+  });
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -43,8 +68,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (!command) return;
 
   try {
-    await command.execute(interaction, ctx);
+    await command.execute(interaction, { client });
   } catch (error) {
+    if (error instanceof UserError) {
+      const message: InteractionReplyOptions = { content: error.message, flags: MessageFlags.Ephemeral };
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(message).catch(() => undefined);
+      } else {
+        await interaction.reply(message).catch(() => undefined);
+      }
+      return;
+    }
     console.error(`[mem] /${interaction.commandName} failed:`, error);
     const message: InteractionReplyOptions = {
       content: "Something went wrong running that command.",
@@ -64,11 +98,11 @@ async function registerCommands(): Promise<void> {
 
   const rest = new REST().setToken(botToken);
   try {
-    if (clientId && devGuildId) {
-      await rest.put(Routes.applicationGuildCommands(clientId, devGuildId), { body });
-      console.log(`[mem] registered ${body.length} guild command(s) in ${devGuildId}`);
-    } else if (clientId) {
-      await rest.put(Routes.applicationCommands(clientId), { body });
+    if (config.clientId && config.devGuildId) {
+      await rest.put(Routes.applicationGuildCommands(config.clientId, config.devGuildId), { body });
+      console.log(`[mem] registered ${body.length} guild command(s) in ${config.devGuildId}`);
+    } else if (config.clientId) {
+      await rest.put(Routes.applicationCommands(config.clientId), { body });
       console.log(`[mem] registered ${body.length} global command(s)`);
     } else {
       console.warn("[mem] DISCORD_CLIENT_ID missing - skipped command registration");
