@@ -46,6 +46,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 - Server Members intent is OPTIONAL via `ENABLE_MEMBERS_INTENT=1` (also toggle in Dev Portal). Off by default so login never breaks.
 
 ## Backlog (priority order)
+- [ ] Command-catalog research (owner request): scan web fun-bots + Red community cog repos for reference; produce docs/COMMAND-CATALOG.md - target ~100 first-party commands using subcommand families (Discord caps top-level at 100/scope; families + plugins are how bots exceed it) + fun-module command families (trivia/gifs/games/utility APIs).
 - [ ] More utility/mod commands (pick 2-4 per run): `/poll` (2-10 buttons), `/say` (ManageMessages echo), `/announce` (embed), `/role add|remove user role` (ManageRoles), `/pin`, `/slowmode` exists, `/serverstats` (member/goal counts), `/case lookup` (case by number).
 - [ ] Reaction roles v1 - needs button/select handling (component interactions); kernel may need a components hook. Design first, then `/reactionrole create|add|remove|list`.
 - [ ] Dashboard: per-server page `/servers/[id]` using /api/guilds data + module cards reading guild_settings via a new `/api/guilds/[id]/settings` route (session -> verify user manages that guild!).
