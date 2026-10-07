@@ -8,7 +8,7 @@ _2026-10-07 (updated post-research)_
 4. **Data:** PostgreSQL + Redis (see open questions re SQLite "lite mode").
 5. **Repo:** pnpm monorepo — `apps/bot`, `apps/web`, `packages/core` (+ `packages/db`). Plugin/module architecture; modules can ship dashboard pages.
 6. **Pricing:** all features free — no premium tiers, ever.
-7. **License intent:** cloning allowed with visible credit; no monetizing clones; full independent rewrites always OK. Proposed: FSL-1.1-MIT + trademark (awaiting owner nod) — `research/04`.
+7. **License:** **MIT** (owner call, 2026-10-07) — fully permissive; forks may even monetize; must keep the copyright notice. Name/logo not covered (brand reserved). Supersedes the earlier FSL/PolyForm discussion.
 8. **Deployment:** one-command self-host + optional hosted mode.
 9. **Name:** **Mem** — renamed 2026-10-07. Repo: github.com/Wassuplol/mem · folder: C:\Users\dodia\mem. Known collisions (all non-blocking): mem.ai product, tiny 2019 top.gg bot, npm `mem` lib.
 10. **Infra:** Cloudflare R2 — transcripts, user uploads, asset CDN.
@@ -29,6 +29,6 @@ _2026-10-07 (updated post-research)_
 - **Tooling:** pnpm 11 requires build-script approvals via `allowBuilds` in `pnpm-workspace.yaml` (esbuild approved).
 
 ## Open questions
-- **License nod** from owner: FSL-1.1-MIT + trademark (rec) vs PolyForm Noncommercial (runner-up). — see §7
 - SQLite "lite mode" for tiny single-node hosts? (Postgres stays default; revisit at P5.)
 - Plugin sandboxing level — decided at P5.
+- OAuth wiring needs: Mem Discord app (client id/secret) + Postgres running.

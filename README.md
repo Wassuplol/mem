@@ -13,7 +13,7 @@ A next-generation community-management Discord bot — **your server's memory** 
 - **Plugin system** — community modules can ship their own dashboard pages
 - **AI built-in** — bring-your-own OpenAI-compatible endpoint (chat, summaries, mod-assist)
 - **Everything free** — no paywalled core features, ever
-- **License (proposed):** FSL-1.1-MIT + trademark — clone freely with credit; no monetized clones; every release becomes MIT after 2 years
+- **License:** MIT — fully open: use, modify, redistribute, even commercially (keep the copyright notice). Name & logo stay reserved as Mem brand.
 - **Branding:** UI icons = Lucide; original SVG brand pack in-repo; open-license emoji sets; user uploads → Cloudflare R2
 
 ## Status

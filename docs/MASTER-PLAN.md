@@ -12,7 +12,7 @@
 - **vs Wick:** security suite included (anti-nuke with rollback, anti-raid, verification) — not a subscription.
 - **vs YAGPDB:** visual configuration for everything; no arcane command syntax to memorize.
 - **vs Red-DiscordBot:** we have a real dashboard, a maintained modern stack, and a plugin SDK that can ship UI.
-- **Openness:** source-available — anyone can clone/use/modify with visible credit; no monetized clones. Proposed license: FSL-1.1-MIT (+ trademark) — `research/04`.
+- **Openness:** fully open source — **MIT** license. Anyone can use, modify and redistribute (commercial included); keep the copyright notice. The Mem name/brand stays reserved.
 
 ## 2. Principles
 
@@ -69,7 +69,7 @@ Servers list → Modules (cards with status + quick toggle) · per-module config
 ## 7. Roadmap
 
 - ✅ **P0 — Decisions locked** (stack, dashboard-first, all-free, license intent, name)
-- 🔜 **P1 — Foundation (in progress):** scaffold landed 2026-10-07 — pnpm workspace, `@mem/core` kernel, bot skeleton + `/ping`, Docker Compose (pg + redis), CI (typecheck green). Remaining: dashboard skeleton + OAuth login. *Done = a test module works end-to-end through the dashboard.*
+- 🔜 **P1 — Foundation (in progress):** scaffold landed 2026-10-07 — pnpm workspace, `@mem/core` kernel, bot skeleton + `/ping`, Docker Compose (pg + redis), CI (typecheck green). Remaining: OAuth login wiring + guild picker (dashboard shell now in place). *Done = a test module works end-to-end through the dashboard.*
 - **P2 — MVP:** moderation, logging, reaction roles, welcome, automod v1 + dashboard config for each. *Done = daily-driver usable on a real server.*
 - **P3 — Community:** leveling, tickets, modmail, custom commands, polls, embed builder.
 - **P4 — Security:** anti-nuke rollback, anti-raid, verification, phishing detection.
@@ -78,8 +78,8 @@ Servers list → Modules (cards with status + quick toggle) · per-module config
 
 ## 8. Open items
 
-1. **License nod from owner** — FSL-1.1-MIT + trademark (rec) vs PolyForm NC (runner-up)
-2. **P1 remainder** — dashboard skeleton (Next.js + Better Auth + shadcn), OAuth login, first UI
+1. ✔ **License: MIT** (decided 2026-10-07)
+2. **P1 remainder** — Better Auth wiring (needs Discord app creds + Postgres up), OAuth login, guild picker
 3. Plugin sandboxing choice — P5
 4. SQLite "lite mode" — P5 decision (Postgres stays default)
 
