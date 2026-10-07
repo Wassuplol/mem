@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, lt, lte, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
-import { guildSettings, guilds, modCases, pollVotes, polls, rolePanelEntries, rolePanels, type ModCase, type Poll, type RolePanel, type RolePanelEntry } from "./schema";
+import { guildSettings, guilds, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -324,6 +324,79 @@ export function createServices(db: Db) {
 
     async deleteRolePanel(panelId: string): Promise<void> {
       await db.delete(rolePanels).where(eq(rolePanels.id, panelId));
+    },
+
+    /* ---------- reminders ---------- */
+
+    async createReminder(input: {
+      guildId: string;
+      channelId: string;
+      userId: string;
+      message: string;
+      remindAt: Date;
+    }): Promise<Reminder> {
+      const [row] = await db
+        .insert(reminders)
+        .values({ id: randomUUID(), ...input })
+        .returning();
+      if (!row) throw new Error("Could not create reminder");
+      return row;
+    },
+
+    async getReminder(reminderId: string): Promise<Reminder | null> {
+      const rows = await db.select().from(reminders).where(eq(reminders.id, reminderId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Unsent reminders whose time has come - oldest first (the bot's scan loop drains these). */
+    async listDueReminders(limit = 25): Promise<Reminder[]> {
+      return db
+        .select()
+        .from(reminders)
+        .where(and(isNull(reminders.sentAt), lte(reminders.remindAt, new Date())))
+        .orderBy(reminders.remindAt)
+        .limit(Math.min(Math.max(limit, 1), 50));
+    },
+
+    async markReminderSent(reminderId: string): Promise<void> {
+      await db.update(reminders).set({ sentAt: new Date() }).where(eq(reminders.id, reminderId));
+    },
+
+    /** A user's pending reminders in one guild, soonest first. */
+    async listUserReminders(guildId: string, userId: string, limit = 10): Promise<Reminder[]> {
+      return db
+        .select()
+        .from(reminders)
+        .where(and(eq(reminders.guildId, guildId), eq(reminders.userId, userId), isNull(reminders.sentAt)))
+        .orderBy(reminders.remindAt)
+        .limit(Math.min(Math.max(limit, 1), 25));
+    },
+
+    async countUserReminders(guildId: string, userId: string): Promise<number> {
+      const rows = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(reminders)
+        .where(and(eq(reminders.guildId, guildId), eq(reminders.userId, userId), isNull(reminders.sentAt)));
+      return Number(rows[0]?.count ?? 0);
+    },
+
+    /** Delete one pending reminder owned by the user; false when missing or not theirs. */
+    async deleteUserReminder(reminderId: string, userId: string): Promise<boolean> {
+      const rows = await db
+        .delete(reminders)
+        .where(and(eq(reminders.id, reminderId), eq(reminders.userId, userId), isNull(reminders.sentAt)))
+        .returning({ id: reminders.id });
+      return rows.length > 0;
+    },
+
+    /** Drop fired reminders older than N days so the table stays small. */
+    async purgeSentReminders(olderThanDays = 30): Promise<number> {
+      const cutoff = new Date(Date.now() - olderThanDays * 86_400_000);
+      const rows = await db
+        .delete(reminders)
+        .where(and(isNotNull(reminders.sentAt), lt(reminders.sentAt, cutoff)))
+        .returning({ id: reminders.id });
+      return rows.length;
     },
   };
 }

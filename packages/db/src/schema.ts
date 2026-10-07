@@ -117,4 +117,22 @@ export const rolePanelEntries = pgTable(
 
 export type RolePanelEntry = typeof rolePanelEntries.$inferSelect;
 
+/** Reminders: Mem pings the user at a wall-clock time (delivered by the bot's scan loop). */
+export const reminders = pgTable(
+  "reminders",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    channelId: text("channel_id").notNull(),
+    userId: text("user_id").notNull(),
+    message: text("message").notNull(),
+    remindAt: timestamp("remind_at", { withTimezone: true }).notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("reminders_due_idx").on(t.sentAt, t.remindAt), index("reminders_user_idx").on(t.guildId, t.userId)],
+);
+
+export type Reminder = typeof reminders.$inferSelect;
+
 export * from "./schema/auth";

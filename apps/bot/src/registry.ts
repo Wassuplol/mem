@@ -4,6 +4,7 @@ import { loggingModule } from "./modules/logging";
 import { moderationModule } from "./modules/moderation";
 import { pingModule } from "./modules/ping";
 import { pollsModule } from "./modules/polls";
+import { remindersModule } from "./modules/reminders";
 import { rolesModule } from "./modules/roles";
 import { utilityModule } from "./modules/utility";
 import { welcomeModule } from "./modules/welcome";
@@ -18,6 +19,7 @@ for (const feature of [
   helpModule,
   pollsModule,
   rolesModule,
+  remindersModule,
 ]) {
   registry.register(feature);
 }
