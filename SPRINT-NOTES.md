@@ -46,7 +46,11 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 - Server Members intent is OPTIONAL via `ENABLE_MEMBERS_INTENT=1` (also toggle in Dev Portal). Off by default so login never breaks.
 
 ## Backlog (priority order)
-- [x] Command-catalog research (owner request): DONE 2026-10-07 - docs/COMMAND-CATALOG.md: ~100 top-level targets across 21 families, Discord-cap + families/per-guild/plugins strategy, receipts (Red cogs, Carl, Dyno, YAGPDB, MEE6, Wick, fun-bots).
+- [~] Command catalog @ 300+ (OWNER DIRECTIVE, supersedes 100/250): expand docs/COMMAND-CATALOG.md to 300+ first-party commands without plugins. ~260 top-level slots (100 global + 100 guild-tier + ~60 context menus) + subcommand families (25/command, 25x25 groups); count subcommands as commands. Include navigation + platform-squeeze + tutorial plan.
+- [ ] EPIC NAVIGATION (first-class requirement): searchable /help hub (category menus, pagination, autocomplete search), consistent family naming; dashboard command explorer later.
+- [ ] EPIC ONBOARDING: /tutorial module + AI concierge (BYO endpoint) + button-driven wizard; Components V2 where valuable; hero art for help/onboarding.
+- [ ] SPIKE (note only, do NOT build yet): Discord Activities (Embedded App SDK) as the true-3D path - web app inside voice channels, reusing dashboard tech.
+- [ ] Platform squeeze (as fits): autocomplete, modals, native polls, AutoMod API, guild onboarding API, scheduled events, forums/threads, soundboard, user-install commands, i18n-ready strings, command permission defaults.
 - [ ] More utility/mod commands (pick 2-4 per run): ✅ /say + /announce shipped (run 1). Remaining: /poll (needs kernel component hook), /role add|remove user role (ManageRoles), /pin, /serverstats (member/goal counts), /case lookup (case by number).
 - [ ] Reaction roles v1 - needs button/select handling (component interactions); kernel may need a components hook. Design first, then `/reactionrole create|add|remove|list`.
 - [ ] Dashboard: per-server page `/servers/[id]` using /api/guilds data + module cards reading guild_settings via a new `/api/guilds/[id]/settings` route (session -> verify user manages that guild!).
