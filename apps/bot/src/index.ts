@@ -1,4 +1,13 @@
-import "dotenv/config";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+// monorepo: read the shared root .env (works from apps/bot and from the repo root)
+for (const candidate of [resolve(".env"), resolve("../../.env")]) {
+  if (existsSync(candidate)) {
+    process.loadEnvFile(candidate);
+    break;
+  }
+}
 import { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes, type InteractionReplyOptions } from "discord.js";
 import { ModuleRegistry, type ModuleContext } from "@mem/core";
 import { pingModule } from "./modules/ping";

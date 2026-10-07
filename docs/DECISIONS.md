@@ -31,4 +31,4 @@ _2026-10-07 (updated post-research)_
 ## Open questions
 - SQLite "lite mode" for tiny single-node hosts? (Postgres stays default; revisit at P5.)
 - Plugin sandboxing level — decided at P5.
-- OAuth wiring needs: Mem Discord app (client id/secret) + Postgres running.
+- OAuth + Postgres: live - creds in root `.env`, login UI wired (2026-10-07).

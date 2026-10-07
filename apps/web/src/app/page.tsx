@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignInButton } from "@/components/sign-in-button";
 
 export default function Home() {
   return (
@@ -24,16 +25,19 @@ export default function Home() {
           </div>
           <ul className="text-sm text-zinc-300 space-y-1.5 list-disc list-inside">
             <li>Next.js + Tailwind foundations in place</li>
-            <li>Discord OAuth2 login - next up</li>
+            <li>Discord OAuth2 login - wired in</li>
             <li>Per-module config pages - after auth</li>
           </ul>
         </div>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white transition"
-        >
-          Open dashboard preview →
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <SignInButton />
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 hover:border-zinc-500 transition"
+          >
+            Open dashboard preview →
+          </Link>
+        </div>
         <p className="text-xs text-zinc-500">
           Mem · github.com/Wassuplol/mem · MIT
         </p>

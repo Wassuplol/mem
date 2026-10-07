@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthChip } from "@/components/auth-chip";
 import { MODULES } from "@/lib/modules";
 
 export default function DashboardLayout({
@@ -40,9 +41,7 @@ export default function DashboardLayout({
               <span className="rounded-full border border-zinc-700 px-3 py-1 text-zinc-400">
                 No server connected
               </span>
-              <span className="rounded-full border border-amber-500/40 px-3 py-1 text-amber-400">
-                Auth pending
-              </span>
+              <AuthChip />
             </div>
           </header>
           <div className="p-6">{children}</div>

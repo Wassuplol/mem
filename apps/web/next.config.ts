@@ -1,4 +1,12 @@
+import path from "node:path";
 import type { NextConfig } from "next";
+
+// monorepo: load the shared root .env (single source of truth for web + bot + db)
+try {
+  process.loadEnvFile(path.resolve(process.cwd(), "../../.env"));
+} catch {
+  // no root .env (CI / production env vars come from the platform)
+}
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
