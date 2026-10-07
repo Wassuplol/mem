@@ -5,7 +5,7 @@ _2026-10-07 (updated post-research)_
 1. **Language:** TypeScript end-to-end.
 2. **Bot library:** discord.js (latest — 14.27.0 installed).
 3. **Dashboard:** integrated web app (Next.js); works self-hosted via Docker Compose (localhost) and hosted in cloud.
-4. **Data:** PostgreSQL + Redis (see open questions re SQLite "lite mode").
+4. **Data:** PostgreSQL + Redis; ORM: **Drizzle** (chosen 2026-10-07). (see open questions re SQLite "lite mode")
 5. **Repo:** pnpm monorepo — `apps/bot`, `apps/web`, `packages/core` (+ `packages/db`). Plugin/module architecture; modules can ship dashboard pages.
 6. **Pricing:** all features free — no premium tiers, ever.
 7. **License:** **MIT** (owner call, 2026-10-07) — fully permissive; forks may even monetize; must keep the copyright notice. Name/logo not covered (brand reserved). Supersedes the earlier FSL/PolyForm discussion.

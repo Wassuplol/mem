@@ -28,7 +28,7 @@
 - **Language:** TypeScript end-to-end
 - **Bot:** discord.js v14 (latest stable; v15 when stable), on a custom kernel layer
 - **Web:** Next.js 16 + Tailwind + shadcn/ui + Better Auth · SSE for realtime
-- **Data:** PostgreSQL (source of truth) + Redis (cache, BullMQ queues, pub/sub for realtime)
+- **Data:** PostgreSQL (source of truth) + Redis (cache, BullMQ queues, pub/sub for realtime) · ORM: Drizzle
 - **AI:** bring-your-own OpenAI-compatible endpoint (base URL + key + model per guild) — chat, summaries, mod-assist; local models (Ollama, LM Studio) work
 - **Assets & branding:** UI icons = Lucide · original SVG brand pack in-repo · open-license emoji sets · user uploads → R2 · `CREDITS.md` tracks third-party assets
 - **Monorepo:** pnpm workspaces + Turborepo → `apps/bot`, `apps/web`, `packages/core`, `packages/db`, `packages/ui`, `plugins/*`

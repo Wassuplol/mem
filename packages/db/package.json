@@ -1,0 +1,30 @@
+{
+  "name": "@mem/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Mem data layer: Drizzle schema + migrations (PostgreSQL).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.3",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3"
+  },
+  "license": "MIT"
+}

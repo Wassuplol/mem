@@ -32,7 +32,7 @@ pnpm dev:bot           # bot login (+ instant /ping in your dev guild)
 apps/bot        # Discord bot (discord.js, TypeScript)
 apps/web        # Web dashboard (Next.js) — P1 next
 packages/core   # kernel: module contract, registry, shared types
-packages/db     # schema + migrations — P2
+packages/db     # Drizzle schema + migrations — P2
 research/       # 6 research reports (2026-10-07)
 docs/           # DECISIONS.md · MASTER-PLAN.md
 ```
