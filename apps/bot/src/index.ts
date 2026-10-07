@@ -21,9 +21,7 @@ console.log(
   `[mem] ${registry.commands().length} command(s), ${registry.events().length} event(s), ${registry.components().length} component handler(s) across ${registry.list().length} module(s)`,
 );
 console.log(
-  `[mem] members intent: ${
-    config.membersIntent ? "on" : "off (set ENABLE_MEMBERS_INTENT=1 + enable it in the Dev Portal for welcome/join-log features)"
-  }`,
+  `[mem] intents: members=${config.membersIntent ? "on" : "off"}, messageContent=${config.messageContent ? "on" : "off"}`,
 );
 
 if (!config.token) {
@@ -43,6 +41,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     ...(config.membersIntent ? [GatewayIntentBits.GuildMembers] : []),
+    ...(config.messageContent ? [GatewayIntentBits.MessageContent] : []),
   ],
   partials: [Partials.Channel, Partials.Message, Partials.GuildMember],
   makeCache: Options.cacheWithLimits({

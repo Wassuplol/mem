@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, SlashCommandBuilder, type GuildMember } from "discord.js";
+import { PermissionFlagsBits, SlashCommandBuilder, type EmbedBuilder, type GuildMember } from "discord.js";
 import { defineModule, type ModuleContext } from "@mem/core";
 import { COLORS, embed } from "../lib/embed";
 import { ensureGuild, requirePermissions } from "../lib/permissions";
@@ -7,19 +7,47 @@ import { services } from "../lib/services";
 
 type WelcomeConfig = { channelId?: string; message?: string };
 
-const DEFAULT_MESSAGE = "Welcome {user} to **{server}**! You are member #{count}. 🎉";
+/** Top-tier default template. Placeholders: {user} {server} {count} */
+const DEFAULT_MESSAGE =
+  "**{user}**, you are member **#{count}**! 🎉\n\nGrab your roles, introduce yourself, and make yourself at home. 💜";
 
 function render(template: string, member: GuildMember): string {
   return template
-    .replaceAll("{user}", `${member}`)
+    .replaceAll("{user}", member.displayName)
     .replaceAll("{server}", member.guild.name)
     .replaceAll("{count}", `${member.guild.memberCount}`);
+}
+
+/** Minimal structural type: anything with a compatible send(). */
+type WelcomeChannel = {
+  send: (options: {
+    content: string;
+    embeds: EmbedBuilder[];
+    allowedMentions: { users: string[] };
+  }) => Promise<unknown>;
+};
+
+/** Shared sender: branded welcome card + a real ping so the member gets notified. */
+async function sendWelcome(channel: WelcomeChannel, member: GuildMember, template: string): Promise<void> {
+  await channel.send({
+    content: `<@${member.id}>`,
+    embeds: [
+      embed({
+        color: COLORS.brand,
+        title: `🎉 Welcome to ${member.guild.name}!`,
+        description: render(template, member),
+      })
+        .setThumbnail(member.displayAvatarURL({ size: 256 }))
+        .setFooter({ text: `${member.guild.name} · member #${member.guild.memberCount}` }),
+    ],
+    allowedMentions: { users: [member.id] },
+  });
 }
 
 export const welcomeModule = defineModule({
   id: "welcome",
   name: "Welcome",
-  version: "0.0.1",
+  version: "0.1.0",
   events: [
     {
       name: "guildMemberAdd",
@@ -29,7 +57,7 @@ export const welcomeModule = defineModule({
         if (!cfg?.channelId) return;
         const channel = await ctx.client.channels.fetch(cfg.channelId).catch(() => null);
         if (!channel || !channel.isSendable()) return;
-        await channel.send({ content: render(cfg.message ?? DEFAULT_MESSAGE, member) }).catch(() => undefined);
+        await sendWelcome(channel, member, cfg.message ?? DEFAULT_MESSAGE).catch(() => undefined);
       },
     },
   ],
@@ -41,17 +69,17 @@ export const welcomeModule = defineModule({
         .addSubcommand((s) =>
           s
             .setName("set")
-            .setDescription("Set the welcome channel and message")
+            .setDescription("Set the welcome channel and card text")
             .addChannelOption((o) => o.setName("channel").setDescription("Welcome channel").setRequired(true))
             .addStringOption((o) =>
               o
                 .setName("message")
-                .setDescription("Template - {user} {server} {count}")
+                .setDescription("Template - {user} {server} {count} (default: the fancy one)")
                 .setMaxLength(1500),
             ),
         )
         .addSubcommand((s) => s.setName("off").setDescription("Disable welcome messages"))
-        .addSubcommand((s) => s.setName("test").setDescription("Send a test welcome message")),
+        .addSubcommand((s) => s.setName("test").setDescription("Send a test welcome card (preview)")),
       async execute(interaction) {
         const i = await ensureGuild(interaction);
         if (!(await requirePermissions(i, PermissionFlagsBits.ManageGuild))) return;
@@ -77,7 +105,7 @@ export const welcomeModule = defineModule({
             embeds: [
               embed({
                 color: COLORS.success,
-                description: `Welcome messages enabled in <#${channel.id}>.\nTemplate: ${message}`,
+                description: `Welcome cards enabled in <#${channel.id}>.\nTemplate: ${message}`,
               }),
             ],
           });
@@ -90,18 +118,19 @@ export const welcomeModule = defineModule({
           return;
         }
 
+        // test
         const cfg = await services.getModuleConfig<WelcomeConfig>(i.guild.id, "welcome");
         if (!cfg?.channelId) {
-          await i.reply({ content: "Welcome is not configured yet - use `/welcome set` first.", flags: 64 });
+          await i.reply({ content: "Welcome is not configured yet - use `/welcome set <channel>` first.", flags: 64 });
           return;
         }
         const channel = await i.client.channels.fetch(cfg.channelId).catch(() => null);
-        if (!channel || !channel.isSendable()) {
+        if (!channel || !channel.isSendable() || !channel.isTextBased()) {
           await i.reply({ content: "The configured welcome channel is missing or not sendable.", flags: 64 });
           return;
         }
-        await channel.send({ content: render(cfg.message ?? DEFAULT_MESSAGE, i.member) });
-        await i.reply({ content: `Test welcome sent to <#${cfg.channelId}>.`, flags: 64 });
+        await sendWelcome(channel, i.member, cfg.message ?? DEFAULT_MESSAGE);
+        await i.reply({ content: `Test welcome card sent to <#${channel.id}> - that is exactly what a new member sees. ✨`, flags: 64 });
       },
     },
   ],
