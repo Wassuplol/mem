@@ -8,7 +8,7 @@ past Discord's command limits — using patterns from the bots we intend to beat
 
 **Status legend:** ✅ live (in `apps/bot`) · 🔜 next (sprint target, shippable in single runs) · 📅 planned (P3+ per `docs/MASTER-PLAN.md`) · 🧩 plugin candidate.
 
-**Coverage: 29 live · 60 next · 11 planned = 100 target.** (live = registered top-level names; subcommand coverage grows within them)
+**Coverage: 30 live · 59 next · 11 planned = 100 target.** (live = registered top-level names; subcommand coverage grows within them)
 
 ## 1. The limit problem (and how big bots dodge it)
 
@@ -122,7 +122,7 @@ Engineering gotchas (from builders who hit the wall):
 | Command | Notes | Status |
 | --- | --- | --- |
 | `/role` | sub: add / remove (ManageRoles gate + hierarchy guard) | ✅ |
-| `/reactionrole` | sub: create / add / remove / clear / list; classic reactions + button/select modes; modes: normal/unique/drop/verify (Carl parity, free) | 🔜 |
+| `/reactionrole` | sub: create / add / remove / list — select-menu toggles with live repaint + emoji labels (v1 ✅; classic reactions, clear, modes: normal/unique/drop/verify later — Carl parity, free) | ✅ v1 |
 | `/rolemenu` | Grouped self-assignable role menus (YAGPDB parity) | 🔜 |
 | `/temprole` | Grant role for N, auto-expire (needs scheduler) | 🔜 |
 | `/rolepersist` | Re-grant roles after rejoin (Dyno-paywalled — free) | 🔜 |
@@ -266,10 +266,10 @@ Engineering gotchas (from builders who hit the wall):
 ## 4. Prerequisite: component interactions — ✅ shipped
 
 The interaction kernel landed in run 1.5 (`@mem/core` component handlers keyed by custom-id prefix,
-plus autocomplete passthrough). Live handlers: `help:` (category browse + pagination + search) and
-`poll:` (modal create + vote buttons + end button). Next consumer: `rr:` for reaction-roles v1, then
-`/rolemenu`, `/verification`, games (`/trivia`, `/rps`) — all reuse the per-module pattern: pick a
-custom-id scheme, register one `ComponentHandler`, keep heavy state in Postgres.
+plus autocomplete passthrough). Live handlers: `help:` (category browse + pagination + search),
+`poll:` (modal create + vote buttons + end button) and `rrole:` (reaction-role select toggles).
+Next consumers: `/rolemenu`, `/verification`, games (`/trivia`, `/rps`) — all reuse the per-module
+pattern: pick a custom-id scheme, register one `ComponentHandler`, keep heavy state in Postgres.
 
 ## 5. Implementation notes
 
@@ -283,8 +283,8 @@ custom-id scheme, register one `ComponentHandler`, keep heavy state in Postgres.
   anime/manga/crypto packs → plugin candidates (niche, API-churn risk).
 - **Suggested order for sprint runs** (each ≈ one batch): 1) `/say` + `/announce` ✅ + `/role` ✅ (no
   components needed) → 2) kernel interaction registry ✅ → 3) `/poll` ✅ (run 3: modal + buttons + live
-  results + lazy auto-close) → 3b) reaction-roles v1 (`rr:` handler + `/reactionrole create|add|remove|list`)
-  → 4) `/snipe` + `/case` ✅ → dashboard server page → README/DECISIONS refresh.
+  results + lazy auto-close) → 3b) reaction-roles v1 ✅ (run 4: `rrole:` select toggles + `/reactionrole
+  create|add|remove|list`) → 4) `/snipe` + `/case` ✅ → dashboard server page → README/DECISIONS refresh.
 
 ## 6. Sources (accessed 2026-10-07)
 

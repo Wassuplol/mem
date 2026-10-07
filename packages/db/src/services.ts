@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
-import { guildSettings, guilds, modCases, pollVotes, polls, type ModCase, type Poll } from "./schema";
+import { guildSettings, guilds, modCases, pollVotes, polls, rolePanelEntries, rolePanels, type ModCase, type Poll, type RolePanel, type RolePanelEntry } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -221,6 +221,109 @@ export function createServices(db: Db) {
         .where(and(eq(polls.guildId, guildId), eq(polls.closed, false)))
         .orderBy(desc(polls.createdAt))
         .limit(Math.min(Math.max(limit, 1), 25));
+    },
+
+    /* ---------- reaction roles (self-assignable role panels) ---------- */
+
+    async createRolePanel(input: {
+      guildId: string;
+      channelId: string;
+      messageId: string;
+      title: string;
+      description?: string | null;
+    }): Promise<RolePanel> {
+      const [row] = await db
+        .insert(rolePanels)
+        .values({
+          id: randomUUID(),
+          guildId: input.guildId,
+          channelId: input.channelId,
+          messageId: input.messageId,
+          title: input.title,
+          description: input.description ?? null,
+        })
+        .returning();
+      if (!row) throw new Error("Could not create role panel");
+      return row;
+    },
+
+    async getRolePanel(panelId: string): Promise<RolePanel | null> {
+      const rows = await db.select().from(rolePanels).where(eq(rolePanels.id, panelId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    async getRolePanelByMessage(messageId: string): Promise<RolePanel | null> {
+      const rows = await db.select().from(rolePanels).where(eq(rolePanels.messageId, messageId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Newest-first role panels for a guild. */
+    async listRolePanels(guildId: string, limit = 10): Promise<RolePanel[]> {
+      return db
+        .select()
+        .from(rolePanels)
+        .where(eq(rolePanels.guildId, guildId))
+        .orderBy(desc(rolePanels.createdAt))
+        .limit(Math.min(Math.max(limit, 1), 25));
+    },
+
+    async getLatestRolePanel(guildId: string): Promise<RolePanel | null> {
+      const rows = await this.listRolePanels(guildId, 1);
+      return rows[0] ?? null;
+    },
+
+    /** Add (or update) a role option on a panel - idempotent per (panel, role). */
+    async addRolePanelEntry(input: {
+      panelId: string;
+      roleId: string;
+      emoji?: string | null;
+      label: string;
+    }): Promise<RolePanelEntry> {
+      const [row] = await db
+        .insert(rolePanelEntries)
+        .values({
+          id: randomUUID(),
+          panelId: input.panelId,
+          roleId: input.roleId,
+          emoji: input.emoji ?? null,
+          label: input.label,
+        })
+        .onConflictDoUpdate({
+          target: [rolePanelEntries.panelId, rolePanelEntries.roleId],
+          set: { emoji: input.emoji ?? null, label: input.label },
+        })
+        .returning();
+      if (!row) throw new Error("Could not add role panel entry");
+      return row;
+    },
+
+    async removeRolePanelEntry(panelId: string, roleId: string): Promise<boolean> {
+      const rows = await db
+        .delete(rolePanelEntries)
+        .where(and(eq(rolePanelEntries.panelId, panelId), eq(rolePanelEntries.roleId, roleId)))
+        .returning({ id: rolePanelEntries.id });
+      return rows.length > 0;
+    },
+
+    /** Options of a panel in creation order (render + select ordering). */
+    async listRolePanelEntries(panelId: string): Promise<RolePanelEntry[]> {
+      return db
+        .select()
+        .from(rolePanelEntries)
+        .where(eq(rolePanelEntries.panelId, panelId))
+        .orderBy(rolePanelEntries.createdAt);
+    },
+
+    async countRolePanelEntries(panelId: string): Promise<number> {
+      const rows = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(rolePanelEntries)
+        .where(eq(rolePanelEntries.panelId, panelId));
+      return Number(rows[0]?.count ?? 0);
+    },
+
+    async deleteRolePanel(panelId: string): Promise<void> {
+      await db.delete(rolePanels).where(eq(rolePanels.id, panelId));
     },
   };
 }

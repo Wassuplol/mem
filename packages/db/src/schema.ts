@@ -82,4 +82,39 @@ export const pollVotes = pgTable(
 
 export type PollVote = typeof pollVotes.$inferSelect;
 
+/** Reaction-role panels: a message carrying a select menu for self-assignable roles. */
+export const rolePanels = pgTable(
+  "role_panels",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    channelId: text("channel_id").notNull(),
+    messageId: text("message_id").notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("role_panels_guild_idx").on(t.guildId), uniqueIndex("role_panels_message_idx").on(t.messageId)],
+);
+
+export type RolePanel = typeof rolePanels.$inferSelect;
+
+/** Select-menu option for a panel: one row per (panel, role). Toggling grants/removes the role. */
+export const rolePanelEntries = pgTable(
+  "role_panel_entries",
+  {
+    id: text("id").primaryKey(), // uuid
+    panelId: text("panel_id")
+      .notNull()
+      .references(() => rolePanels.id, { onDelete: "cascade" }),
+    roleId: text("role_id").notNull(),
+    emoji: text("emoji"),
+    label: text("label").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("role_panel_entries_panel_role_idx").on(t.panelId, t.roleId)],
+);
+
+export type RolePanelEntry = typeof rolePanelEntries.$inferSelect;
+
 export * from "./schema/auth";
