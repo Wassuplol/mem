@@ -40,7 +40,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper= push "https://x-access-token:${T
 ## What already exists (do not rebuild)
 - Kernel `@mem/core`: defineModule, ModuleRegistry (commands + EVENTS), tests 5/5.
 - DB `@mem/db`: guilds, guild_settings, mod_cases, auth tables; services (ensureGuild, get/setModuleConfig, createCase, listActiveWarnings, clearActiveWarnings); smokes (auth-smoke, mod-smoke).
-- Bot apps/bot: 22 commands / 5 modules / 8 events. Modules: ping, moderation (warn, warnings, removewarn, timeout, mute, untimeout, unmute, kick, ban, unban, purge, slowmode), utility (serverinfo, userinfo, avatar, membercount, servericon, botinfo, help), logging (ban/unban/message-delete/member-add-remove events + /logchannel), welcome (member-join event + /welcome set/off/test).
+- Bot apps/bot: 22 commands, 5 modules, 6 events. Modules: ping, moderation (warn, warnings, removewarn, timeout, mute, untimeout, unmute, kick, ban, unban, purge, slowmode), utility (serverinfo, userinfo, avatar, membercount, servericon, botinfo, help), logging (ban/unban/message-delete/member-add-remove events + /logchannel), welcome (member-join event + /welcome set/off/test).
 - RAM discipline: no message/presence/reaction caches; member/user caches capped at 100; partials for events; nothing grows in memory.
 - Web apps/web: Better Auth live, `/api/guilds` route (session -> account access token -> discord.com/users/@me/guilds -> filter MANAGE_GUILD), `/servers` page, dashboard shell + Servers link. Verified: 401 no-session / 409 no-token / 401 discord_token_expired (real outbound call).
 - Server Members intent is OPTIONAL via `ENABLE_MEMBERS_INTENT=1` (also toggle in Dev Portal). Off by default so login never breaks.
