@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import { ArrowUpRight, Crown, ShieldCheck, Server as ServerIcon } from "lucide-react";
@@ -123,15 +124,18 @@ async function ServersContent() {
                 <span className="font-mono text-zinc-600">{guild.id}</span>
               </div>
             </div>
-            <span className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] text-zinc-500">
-              Manage · soon
-            </span>
+            <Link
+              href={`/servers/${guild.id}`}
+              className="flex shrink-0 items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] text-zinc-300 transition hover:border-violet-400/40 hover:text-violet-200"
+            >
+              Manage <ArrowUpRight className="h-3 w-3" />
+            </Link>
           </li>
         ))}
       </ul>
       <p className="mt-6 text-[11.5px] text-zinc-600">
         API: <code className="rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono">GET /api/guilds</code>{" "}
-        returns this list as JSON. Per-server control pages are next on the roadmap.
+        returns this list as JSON. Open a server for its control room — stats & module states.
       </p>
     </>
   );

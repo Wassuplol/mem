@@ -49,7 +49,8 @@ The big incumbents charge for their best features. Mem's entire model is the opp
 ## 🖥️ Dashboard
 
 <div align="center">
-  <img src="./docs/assets/dashboard.png" alt="Mem dashboard" width="90%"/>
+  <img src="./docs/assets/dashboard.png" alt="Mem dashboard" width="49%"/>
+  <img src="./docs/assets/server-control-room.png" alt="Per-server control room" width="49%"/>
 </div>
 
 - Sign in with Discord (OAuth2, `identify` + `guilds`)
@@ -57,7 +58,7 @@ The big incumbents charge for their best features. Mem's entire model is the opp
 - Session-backed API (`/api/guilds`) — the frontend and automation share one source of truth
 - **Public API v1** (`/api/v1`) — Bearer-key access to cases, giveaways, polls and warnings; create keys with `/apikey create`, docs at `/docs/api`
 - **Memi** — a 3D VTuber-style companion (VRoid VRM avatar, idle/talking/thinking animations, NVIDIA NIM brain) who floats in the dashboard, chats, and walks you to any page
-- Per-server module pages are next on the roadmap
+- **Per-server control rooms** — open any server you manage for live stats (cases, polls, giveaways, role panels) and per-module setup state
 
 > **🆓 Free hosting guide:** [docs/HOSTING.md](docs/HOSTING.md) — run the whole stack (bot + dashboard + Postgres + Redis) on **Oracle Cloud's Always Free tier** or **Northflank's** always-on sandbox. Zero cost, forever.
 
