@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Send, X } from "lucide-react";
 import { useSystem } from "@/lib/system";
+import { parseActions } from "@/lib/memi-actions";
 
 const ChibiCanvas = dynamic(() => import("./chibi").then((m) => m.ChibiCanvas), { ssr: false });
 
@@ -17,19 +18,6 @@ interface Msg {
   role: "user" | "memi";
   content: string;
   actions?: Action[];
-}
-
-const ACTION_RE = /\[\[action:([^\]|]+)\|([^\]]+)\]\]/g;
-
-function parseActions(text: string): { clean: string; actions: Action[] } {
-  const actions: Action[] = [];
-  const clean = text
-    .replace(ACTION_RE, (_all, href: string, label: string) => {
-      if (typeof href === "string" && href.startsWith("/")) actions.push({ href, label: String(label) });
-      return "";
-    })
-    .trim();
-  return { clean, actions };
 }
 
 const QUICK = ["What can Mem do?", "Help me set things up", "Where are my servers?"];
