@@ -1,8 +1,9 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { and, desc, eq, isNotNull, isNull, lt, lte, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gt, isNotNull, isNull, lt, lte, ne, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
-import { apiKeys, giveawayEntries, giveaways, guildSettings, guilds, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, type ApiKey, type Giveaway, type GiveawayEntry, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
+import { levelFromXp } from "./levels";
+import { apiKeys, giveawayEntries, giveaways, guildSettings, guilds, levels, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, type ApiKey, type Giveaway, type GiveawayEntry, type Level, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -659,6 +660,62 @@ export function createServices(db: Db) {
         .where(and(eq(apiKeys.id, keyId), eq(apiKeys.guildId, guildId), isNull(apiKeys.revokedAt)))
         .returning({ id: apiKeys.id });
       return rows.length > 0;
+    },
+
+    /* ---------- leveling ---------- */
+
+    /** Adds XP (atomic upsert) and returns fresh totals + the previous level. */
+    async grantXp(guildId: string, userId: string, amount: number): Promise<{ xp: number; level: number; previousLevel: number }> {
+      const [row] = await db
+        .insert(levels)
+        .values({ guildId, userId, xp: amount })
+        .onConflictDoUpdate({
+          target: [levels.guildId, levels.userId],
+          set: { xp: sql`${levels.xp} + ${amount}`, updatedAt: new Date() },
+        })
+        .returning({ xp: levels.xp });
+      const xp = row?.xp ?? amount;
+      return { xp, level: levelFromXp(xp), previousLevel: levelFromXp(xp - amount) };
+    },
+
+    async getMemberLevel(guildId: string, userId: string): Promise<Level | null> {
+      const rows = await db
+        .select()
+        .from(levels)
+        .where(and(eq(levels.guildId, guildId), eq(levels.userId, userId)))
+        .limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Top members by XP, highest first. */
+    async getTopLevels(guildId: string, limit = 10, offset = 0): Promise<Level[]> {
+      return db
+        .select()
+        .from(levels)
+        .where(eq(levels.guildId, guildId))
+        .orderBy(desc(levels.xp))
+        .limit(limit)
+        .offset(offset);
+    },
+
+    /** 1-based leaderboard position; 0-XP members rank after everyone with XP. */
+    async getRank(guildId: string, userId: string): Promise<number> {
+      const row = await this.getMemberLevel(guildId, userId);
+      const myXp = row?.xp ?? 0;
+      const [above] = await db
+        .select({ n: count() })
+        .from(levels)
+        .where(and(eq(levels.guildId, guildId), gt(levels.xp, myXp)));
+      return Number(above?.n ?? 0) + 1;
+    },
+
+    /** Members with at least 1 XP (the leaderboard population). */
+    async countRanked(guildId: string): Promise<number> {
+      const [row] = await db
+        .select({ n: count() })
+        .from(levels)
+        .where(and(eq(levels.guildId, guildId), gt(levels.xp, 0)));
+      return Number(row?.n ?? 0);
     },
   };
 }

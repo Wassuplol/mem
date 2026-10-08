@@ -226,4 +226,18 @@ export const apiKeys = pgTable(
 
 export type ApiKey = typeof apiKeys.$inferSelect;
 
+/** Chat XP per member (one row per guild+user; level is derived from xp). */
+export const levels = pgTable(
+  "levels",
+  {
+    guildId: text("guild_id").notNull(),
+    userId: text("user_id").notNull(),
+    xp: integer("xp").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.guildId, t.userId] }), index("levels_guild_xp_idx").on(t.guildId, t.xp)],
+);
+
+export type Level = typeof levels.$inferSelect;
+
 export * from "./schema/auth";

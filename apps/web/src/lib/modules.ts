@@ -133,8 +133,9 @@ export const MODULES: ModuleInfo[] = [
     id: "leveling",
     name: "Leveling",
     icon: Trophy,
-    description: "XP for chat & voice, role rewards, leaderboards. On the build queue.",
-    status: "soon",
+    description: "XP for chatting, role rewards, rank cards and leaderboards.",
+    status: "live",
+    commands: 3,
     accent: "from-yellow-500/25 to-amber-500/10 text-yellow-300",
   },
   {

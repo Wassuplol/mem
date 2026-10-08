@@ -76,7 +76,7 @@ export function HudFrame() {
       {/* bottom status */}
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-6 py-3 text-[10px] uppercase tracking-[0.24em] text-zinc-600">
         <span>v0.1 // MIT — free forever</span>
-        <span className="hidden lg:inline">35 cmds · 12 modules · 0 paywalls</span>
+        <span className="hidden lg:inline">38 cmds · 13 modules · 0 paywalls</span>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { ModuleRegistry } from "@mem/core";
 import { apikeysModule } from "./modules/apikeys";
 import { giveawaysModule } from "./modules/giveaways";
 import { helpModule } from "./modules/help";
+import { levelingModule } from "./modules/leveling";
 import { loggingModule } from "./modules/logging";
 import { moderationModule } from "./modules/moderation";
 import { pingModule } from "./modules/ping";
@@ -26,6 +27,7 @@ for (const feature of [
   giveawaysModule,
   temprolesModule,
   apikeysModule,
+  levelingModule,
 ]) {
   registry.register(feature);
 }

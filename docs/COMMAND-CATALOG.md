@@ -194,13 +194,14 @@ Engineering gotchas (from builders who hit the wall):
 | --- | --- | --- |
 | `/rep` | sub: give / take / check / top / log (YAGPDB parity, free) | 🔜 |
 
-### K. Leveling — 3
+### K. Leveling — 4
 
 | Command | Notes | Status |
 | --- | --- | --- |
-| `/rank` | Card rendering (canvas) | 📅 |
-| `/leaderboard` | — | 📅 |
-| `/level` | sub: set / reset; XP importer (MEE6/Carl/Dyno) | 📅 |
+| `/rank` | Progress-bar card + rank + XP | ✅ |
+| `/leaderboard` | Paged (10/page) + prev/next buttons | ✅ |
+| `/levels` | sub: channel / toggle / addrole / removerole / config | ✅ |
+| `/level` (v1.1) | sub: set / reset; XP importer (MEE6/Carl/Dyno) | 📅 |
 
 ### L. Giveaways — 1
 
@@ -544,15 +545,15 @@ Status: L = live, N = next (buildable in current phases), P = planned (later/inf
 
 ### K. Leveling - 11
 
-- [N] `/rank` - xp card + progress
-- [N] `/leaderboard` - top members
-- [N] `/level config` - enable/rate/announce channel
+- [L] `/rank` - xp card + progress
+- [L] `/leaderboard` - top members (paged, buttons)
+- [L] `/levels config` - channel/toggle/role rewards
 - [N] `/xp add` - grant xp
 - [N] `/xp remove` - remove xp
 - [N] `/xp set` - set exact xp/level
-- [N] `/level rewards add` - role reward at level
-- [N] `/level rewards remove` - remove reward
-- [N] `/level rewards list` - list rewards
+- [L] `/levels addrole` - role reward at level
+- [L] `/levels removerole` - remove reward
+- [L] `/levels config` (panel) - lists rewards
 - [N] `/xp multiplier` - role/channel multipliers
 - [P] `/level card` - custom rank card setup
 
