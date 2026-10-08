@@ -237,7 +237,8 @@ Engineering gotchas (from builders who hit the wall):
 
 | Command | Notes | Status |
 | --- | --- | --- |
-| `/automod` | sub: rulesets / toggle / logs / violations; built-in: invites, links, mentions, caps, words, spam (YAGPDB-pattern, free) | 🔜 |
+| `/automod` | sub: enable / disable / mentions / spam / words / alertchannel / timeoutminutes / status — native Discord AutoMod (presets, custom words, mention + message spam, adopt-takeover) — **shipped** | ✅ |
+| `/verification` | sub: setup / joinrole / off / config — button join gate + unverified role + role swap — **shipped** | ✅ |
 | `/security` | anti-spam (auto-timeout) / anti-raid / anti-nuke + trust / screening / quarantine / alert channel — **shipped** | ✅ |
 | `/lockdown` | panic mode: FREEZE every channel (per-channel overwrite snapshots, exact restore on end) — **shipped** | ✅ |
 | `/antinuke` | Wick-style guardian: mass-action detection, quarantine, panic mode, backups (audit-log driven) | 📅 |
@@ -614,17 +615,17 @@ Status: L = live, N = next (buildable in current phases), P = planned (later/inf
 
 - [L] `/security` - anti-spam / anti-raid / anti-nuke / screening / alertchannel / trust / strip / restore / config · every threshold per-server
 - [L] `/lockdown` - panic mode: freeze the server, restore exactly on end
-- [N] `/automod enable` - turn on native AutoMod rules
-- [N] `/automod disable` - off
-- [N] `/automod status` - current rules
-- [N] `/automod rules` - links/invites/spam/caps/mentions
+- [L] `/automod enable` - turn on native AutoMod rules (+ adopt takeover)
+- [L] `/automod disable` - off
+- [L] `/automod status` - current rules
+- [L] `/automod words|mentions|spam|alertchannel|timeoutminutes` - words, mention + spam rules, alerts, timeout action
 - [N] `/filter words` - word blocklist add/remove/list
 - [N] `/antinuke config` - anti-nuke thresholds + actions
 - [N] `/antinuke trust` - trusted users/bots
 - [N] `/antiraid config` - raid triggers
-- [N] `/verification setup` - gate button + role
-- [N] `/quarantine` - quarantine member
-- [N] `/unquarantine` - release
+- [L] `/verification setup` - gate button + role (+ joinrole / off / config)
+- [L] `/security strip` - quarantine member (roles stored, /security restore to undo)
+- [L] `/security restore` - release
 - [P] `/whitelist` - trusted bots immune from antinuke
 - [P] `/backup` - server template create/load
 

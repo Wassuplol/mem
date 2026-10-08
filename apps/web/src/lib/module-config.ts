@@ -72,6 +72,16 @@ export const EDITABLE_MODULES: EditableModule[] = [
     fields: [{ path: "channelId", label: "Log channel", type: "channel" }],
   },
   {
+    id: "verification",
+    title: "Verification",
+    blurb: "The join gate: verify role, optional unverified join role and the role removed on verify.",
+    fields: [
+      { path: "roleId", label: "Verify role", type: "role", help: "Granted when a member clicks Verify." },
+      { path: "removeRoleId", label: "Removed on verify", type: "role" },
+      { path: "joinRoleId", label: "Join role (unverified)", type: "role", help: "Auto-given on join until they verify." },
+    ],
+  },
+  {
     id: "tickets",
     title: "Tickets",
     blurb: "Staff role and log channel for support tickets. The panel is posted from Discord.",
