@@ -210,10 +210,10 @@ export const LIVE_MODULES = MODULES.filter((m) => m.status === "live");
 
 /** Snapshot stats (kept in sync with the bot boot log). */
 export const STATS = {
-  commands: 35,
-  modules: 12,
-  events: 7,
-  components: 4,
-  roadmapDone: 39,
+  commands: 59,
+  modules: 19,
+  events: 16,
+  components: 8,
+  roadmapDone: 54,
   roadmapTotal: 319,
 };
