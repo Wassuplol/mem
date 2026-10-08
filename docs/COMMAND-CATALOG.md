@@ -612,7 +612,7 @@ Status: L = live, N = next (buildable in current phases), P = planned (later/inf
 
 ### Q. Automod & security - 13
 
-- [L] `/security` - anti-spam / anti-raid / anti-nuke / screening / alertchannel / trust / strip / restore / config
+- [L] `/security` - anti-spam / anti-raid / anti-nuke / screening / alertchannel / trust / strip / restore / config · every threshold per-server
 - [L] `/lockdown` - panic mode: freeze the server, restore exactly on end
 - [N] `/automod enable` - turn on native AutoMod rules
 - [N] `/automod disable` - off

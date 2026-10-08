@@ -17,9 +17,9 @@ const G = "0";
 
 type SecurityConfig = {
   alertChannelId?: string | null;
-  antispam?: boolean;
-  antiraid?: boolean;
-  antinuke?: boolean;
+  antispam?: boolean | { enabled: boolean; max: number; windowSec: number; timeoutMin: number };
+  antiraid?: boolean | { enabled: boolean; joins: number; windowSec: number };
+  antinuke?: boolean | { enabled: boolean; actions: number; windowSec: number };
   screening?: { enabled: boolean; minAgeDays: number };
   trust?: string[];
   quarantined?: Array<{ userId: string; roleIds: string[]; at: string }>;
@@ -31,9 +31,9 @@ await services.ensureGuild(G, "security-smoke");
 
 const cfg: SecurityConfig = {
   alertChannelId: "chan-1",
-  antispam: false,
-  antiraid: true,
-  antinuke: true,
+  antispam: { enabled: true, max: 12, windowSec: 10, timeoutMin: 15 },
+  antiraid: { enabled: true, joins: 14, windowSec: 45 },
+  antinuke: { enabled: false, actions: 6, windowSec: 20 },
   screening: { enabled: true, minAgeDays: 7 },
   trust: ["u1", "u2"],
   quarantined: [{ userId: "u3", roleIds: ["r1", "r2"], at: new Date().toISOString() }],
@@ -51,9 +51,15 @@ const cfg: SecurityConfig = {
 await services.setModuleConfig(G, "security", cfg);
 const back = await services.getModuleConfig<SecurityConfig>(G, "security");
 
+const spam = typeof back?.antispam === "object" ? back.antispam : null;
+const raid = typeof back?.antiraid === "object" ? back.antiraid : null;
+const nuke = typeof back?.antinuke === "object" ? back.antinuke : null;
+
 const pass1 =
   back?.alertChannelId === "chan-1" &&
-  back?.antispam === false &&
+  spam?.max === 12 && spam?.windowSec === 10 && spam?.timeoutMin === 15 &&
+  raid?.joins === 14 && raid?.windowSec === 45 &&
+  nuke?.enabled === false && nuke?.actions === 6 &&
   back?.screening?.minAgeDays === 7 &&
   back?.trust?.length === 2 &&
   back?.quarantined?.[0]?.roleIds.length === 2 &&

@@ -22,28 +22,58 @@ import { services } from "../lib/services";
 
 type LockdownSnapshot = { id: string; allow: string | null; deny: string | null };
 
+type AntiSpamCfg = { enabled: boolean; max: number; windowSec: number; timeoutMin: number };
+type AntiRaidCfg = { enabled: boolean; joins: number; windowSec: number };
+type AntiNukeCfg = { enabled: boolean; actions: number; windowSec: number };
+
 type SecurityConfig = {
   alertChannelId?: string | null;
-  antispam?: boolean;
-  antiraid?: boolean;
-  antinuke?: boolean;
-  assessment?: never; // reserved
+  /** Legacy boolean or full per-server thresholds. */
+  antispam?: boolean | AntiSpamCfg;
+  antiraid?: boolean | AntiRaidCfg;
+  antinuke?: boolean | AntiNukeCfg;
   screening?: { enabled: boolean; minAgeDays: number };
   trust?: string[];
   quarantined?: Array<{ userId: string; roleIds: string[]; at: string }>;
   lockdown?: { active: boolean; at: string; reason: string; channels: LockdownSnapshot[] } | null;
 };
 
-const SPAM_WINDOW_MS = 8_000;
-const SPAM_MAX = 10;
-const SPAM_TIMEOUT_MIN = 10;
-const RAID_WINDOW_MS = 30_000;
-const RAID_MAX = 10;
-const NUKE_WINDOW_MS = 15_000;
-const NUKE_MAX = 4;
-const NUKE_COOLDOWN_MS = 30_000;
+/** Defaults only — every number is per-server overridable via /security. */
+const DEFAULT_SPAM: AntiSpamCfg = { enabled: true, max: 10, windowSec: 8, timeoutMin: 10 };
+const DEFAULT_RAID: AntiRaidCfg = { enabled: true, joins: 10, windowSec: 30 };
+const DEFAULT_NUKE: AntiNukeCfg = { enabled: true, actions: 4, windowSec: 15 };
+const NUKE_COOLDOWN_MS = 30_000; // internal alert re-fire cooldown (not a user threshold)
 const DEFAULT_MIN_AGE_DAYS = 7;
 const MAX_LOCK_CHANNELS = 200;
+
+const asBool = (v: boolean | undefined): boolean => v !== false;
+
+function spamCfg(cfg: SecurityConfig): AntiSpamCfg {
+  const v = cfg.antispam;
+  if (typeof v === "object" && v !== null) {
+    return {
+      enabled: asBool(v.enabled),
+      max: v.max ?? DEFAULT_SPAM.max,
+      windowSec: v.windowSec ?? DEFAULT_SPAM.windowSec,
+      timeoutMin: v.timeoutMin ?? DEFAULT_SPAM.timeoutMin,
+    };
+  }
+  return { ...DEFAULT_SPAM, enabled: asBool(v) };
+}
+function raidCfg(cfg: SecurityConfig): AntiRaidCfg {
+  const v = cfg.antiraid;
+  if (typeof v === "object" && v !== null) {
+    return { enabled: asBool(v.enabled), joins: v.joins ?? DEFAULT_RAID.joins, windowSec: v.windowSec ?? DEFAULT_RAID.windowSec };
+  }
+  return { ...DEFAULT_RAID, enabled: asBool(v) };
+}
+function nukeCfg(cfg: SecurityConfig): AntiNukeCfg {
+  const v = cfg.antinuke;
+  if (typeof v === "object" && v !== null) {
+    return { enabled: asBool(v.enabled), actions: v.actions ?? DEFAULT_NUKE.actions, windowSec: v.windowSec ?? DEFAULT_NUKE.windowSec };
+  }
+  return { ...DEFAULT_NUKE, enabled: asBool(v) };
+}
 
 /* ---------- bounded in-memory state ---------- */
 
@@ -102,13 +132,14 @@ async function onMemberAdd(member: GuildMember): Promise<void> {
   }
 
   // Anti-raid: join velocity.
-  if (cfg.antiraid !== false) {
-    const count = pushWindow(joinWindows, member.guild.id, now, RAID_WINDOW_MS);
-    if (count === RAID_MAX) {
+  const raid = raidCfg(cfg);
+  if (raid.enabled) {
+    const count = pushWindow(joinWindows, member.guild.id, now, raid.windowSec * 1000);
+    if (count === raid.joins) {
       await sendAlert(member.guild, cfg, {
         title: "🚨 Possible raid detected",
         description: [
-          `**${count} members joined in ${RAID_WINDOW_MS / 1000}s.**`,
+          `**${count} members joined in ${raid.windowSec}s.**`,
           `Latest: ${member.user.tag} (<@${member.id}>, account <t:${Math.floor(member.user.createdTimestamp / 1000)}:R> old).`,
           "",
           "If this is an attack: `/lockdown start` immediately. Consider enabling screening: `/security screening on`.",
@@ -123,30 +154,31 @@ async function onMessageCreate(message: Message): Promise<void> {
   const member = message.member;
   if (!member) return;
   const cfg = await loadConfig(message.guild.id);
-  if (cfg.antispam === false) return;
+  const spam = spamCfg(cfg);
+  if (!spam.enabled) return;
   if (member.permissions.has(PermissionFlagsBits.ManageMessages)) return;
 
   const key = `${message.guild.id}:${message.author.id}`;
   const now = Date.now();
   if ((spamMutedUntil.get(key) ?? 0) > now) return;
 
-  const count = pushWindow(spamWindows, key, now, SPAM_WINDOW_MS);
-  if (count < SPAM_MAX) return;
+  const count = pushWindow(spamWindows, key, now, spam.windowSec * 1000);
+  if (count < spam.max) return;
 
   spamWindows.delete(key);
   spamMutedUntil.set(key, now + 60_000);
   if (spamMutedUntil.size > 5000) spamMutedUntil.clear();
 
   const timedOut = await member
-    .timeout(SPAM_TIMEOUT_MIN * 60_000, `Anti-spam: ${count} messages in ${SPAM_WINDOW_MS / 1000}s`)
+    .timeout(spam.timeoutMin * 60_000, `Anti-spam: ${count} messages in ${spam.windowSec}s`)
     .then(() => true)
     .catch(() => false);
 
   await sendAlert(message.guild, cfg, {
     title: "🛡️ Anti-spam triggered",
     description: [
-      `${message.author.tag} (<@${message.author.id}>) sent **${count} messages in ${SPAM_WINDOW_MS / 1000}s** in <#${message.channelId}>.`,
-      timedOut ? `⏳ Timed out for **${SPAM_TIMEOUT_MIN} min**.` : "⚠️ Could not time them out (check my permissions).",
+      `${message.author.tag} (<@${message.author.id}>) sent **${count} messages in ${spam.windowSec}s** in <#${message.channelId}>.`,
+      timedOut ? `⏳ Timed out for **${spam.timeoutMin} min**.` : "⚠️ Could not time them out (check my permissions).",
     ].join("\n"),
   });
 }
@@ -164,23 +196,24 @@ async function onAuditEntry(entry: GuildAuditLogsEntry, guild: Guild): Promise<v
   const actorId = entry.executorId;
   if (!actorId || actorId === guild.ownerId || actorId === guild.client.user.id) return;
   const cfg = await loadConfig(guild.id);
-  if (cfg.antinuke === false) return;
+  const nuke = nukeCfg(cfg);
+  if (!nuke.enabled) return;
   if (cfg.trust?.includes(actorId)) return;
 
   const key = `${guild.id}:${actorId}`;
   const now = Date.now();
   const state = nukeWindows.get(key) ?? { ts: [], alertedAt: 0 };
-  state.ts = state.ts.filter((t) => now - t < NUKE_WINDOW_MS);
+  state.ts = state.ts.filter((t) => now - t < nuke.windowSec * 1000);
   state.ts.push(now);
   nukeWindows.set(key, state);
   if (nukeWindows.size > 2000) nukeWindows.clear();
 
-  if (state.ts.length >= NUKE_MAX && now - state.alertedAt > NUKE_COOLDOWN_MS) {
+  if (state.ts.length >= nuke.actions && now - state.alertedAt > NUKE_COOLDOWN_MS) {
     state.alertedAt = now;
     await sendAlert(guild, cfg, {
       title: "🚨 Possible nuke detected",
       description: [
-        `<@${actorId}> performed **${state.ts.length} destructive actions in ${NUKE_WINDOW_MS / 1000}s** (last: ${NUKE_LABELS[entry.action] ?? "destructive action"}).`,
+        `<@${actorId}> performed **${state.ts.length} destructive actions in ${nuke.windowSec}s** (last: ${NUKE_LABELS[entry.action] ?? "destructive action"}).`,
         "",
         "Immediate options:",
         "• `/lockdown start` — lock every channel",
@@ -277,20 +310,27 @@ export const securityModule = defineModule({
         .addSubcommand((s) =>
           s
             .setName("antispam")
-            .setDescription(`Auto-timeout message floods (${SPAM_MAX} msgs / ${SPAM_WINDOW_MS / 1000}s)`)
-            .addStringOption((o) => o.setName("state").setDescription("on / off").setRequired(true).addChoices({ name: "on", value: "on" }, { name: "off", value: "off" })),
+            .setDescription("Auto-timeout message floods — set your own thresholds")
+            .addStringOption((o) => o.setName("state").setDescription("on / off").setRequired(true).addChoices({ name: "on", value: "on" }, { name: "off", value: "off" }))
+            .addIntegerOption((o) => o.setName("max").setDescription("Messages within the window that trigger it (3-100)").setMinValue(3).setMaxValue(100))
+            .addIntegerOption((o) => o.setName("window_seconds").setDescription("Counting window in seconds (3-120)").setMinValue(3).setMaxValue(120))
+            .addIntegerOption((o) => o.setName("timeout_minutes").setDescription("Timeout length in minutes (1-1440)").setMinValue(1).setMaxValue(1440)),
         )
         .addSubcommand((s) =>
           s
             .setName("antiraid")
-            .setDescription(`Alert on join floods (${RAID_MAX} joins / ${RAID_WINDOW_MS / 1000}s)`)
-            .addStringOption((o) => o.setName("state").setDescription("on / off").setRequired(true).addChoices({ name: "on", value: "on" }, { name: "off", value: "off" })),
+            .setDescription("Alert on join floods — set your own thresholds")
+            .addStringOption((o) => o.setName("state").setDescription("on / off").setRequired(true).addChoices({ name: "on", value: "on" }, { name: "off", value: "off" }))
+            .addIntegerOption((o) => o.setName("joins").setDescription("Joins within the window that trigger it (3-200)").setMinValue(3).setMaxValue(200))
+            .addIntegerOption((o) => o.setName("window_seconds").setDescription("Counting window in seconds (5-300)").setMinValue(5).setMaxValue(300)),
         )
         .addSubcommand((s) =>
           s
             .setName("antinuke")
-            .setDescription(`Alert on mass destructive actions (${NUKE_MAX} / ${NUKE_WINDOW_MS / 1000}s)`)
-            .addStringOption((o) => o.setName("state").setDescription("on / off").setRequired(true).addChoices({ name: "on", value: "on" }, { name: "off", value: "off" })),
+            .setDescription("Alert on mass destructive actions — set your own thresholds")
+            .addStringOption((o) => o.setName("state").setDescription("on / off").setRequired(true).addChoices({ name: "on", value: "on" }, { name: "off", value: "off" }))
+            .addIntegerOption((o) => o.setName("actions").setDescription("Destructive actions within the window that trigger it (2-50)").setMinValue(2).setMaxValue(50))
+            .addIntegerOption((o) => o.setName("window_seconds").setDescription("Counting window in seconds (5-300)").setMinValue(5).setMaxValue(300)),
         )
         .addSubcommand((s) =>
           s
@@ -332,20 +372,23 @@ export const securityModule = defineModule({
 
         if (sub === "config") {
           const screening = cfg.screening ?? { enabled: false, minAgeDays: DEFAULT_MIN_AGE_DAYS };
+          const spam = spamCfg(cfg);
+          const raid = raidCfg(cfg);
+          const nuke = nukeCfg(cfg);
           const panel = embed({ color: COLORS.brand, title: "🛡️ Security settings" })
             .setDescription(
               [
                 `Alert channel: ${cfg.alertChannelId ? `<#${cfg.alertChannelId}>` : "*off — set one with `/security alertchannel`*"}`,
-                `Anti-spam: ${cfg.antispam === false ? "off" : "**on**"} — ${SPAM_MAX} msgs/${SPAM_WINDOW_MS / 1000}s → ${SPAM_TIMEOUT_MIN} min timeout`,
-                `Anti-raid: ${cfg.antiraid === false ? "off" : "**on**"} — alerts at ${RAID_MAX} joins/${RAID_WINDOW_MS / 1000}s`,
-                `Anti-nuke: ${cfg.antinuke === false ? "off" : "**on**"} — alerts at ${NUKE_MAX} destructive actions/${NUKE_WINDOW_MS / 1000}s`,
+                `Anti-spam: ${spam.enabled ? "**on**" : "off"} — **${spam.max} msgs / ${spam.windowSec}s** → **${spam.timeoutMin} min** timeout`,
+                `Anti-raid: ${raid.enabled ? "**on**" : "off"} — alert at **${raid.joins} joins / ${raid.windowSec}s**`,
+                `Anti-nuke: ${nuke.enabled ? "**on**" : "off"} — alert at **${nuke.actions} actions / ${nuke.windowSec}s**`,
                 `Screening: ${screening.enabled ? `**on** — kicking accounts < ${screening.minAgeDays} day(s)` : "off"}`,
                 `Trusted (anti-nuke): ${(cfg.trust ?? []).length} user(s)`,
                 `Quarantined: ${(cfg.quarantined ?? []).length} member(s)`,
                 `Lockdown: ${cfg.lockdown?.active ? `**ACTIVE** since <t:${Math.floor(new Date(cfg.lockdown.at).getTime() / 1000)}:R>` : "off"}`,
               ].join("\n"),
             )
-            .setFooter({ text: "Anti-nuke auto-trusts: server owner + me · /lockdown start | end" });
+            .setFooter({ text: "Every number is per-server — tune with /security antispam · antiraid · antinuke" });
           await i.reply({ embeds: [panel], flags: MessageFlags.Ephemeral });
           return;
         }
@@ -358,12 +401,42 @@ export const securityModule = defineModule({
           return;
         }
 
-        if (sub === "antispam" || sub === "antiraid" || sub === "antinuke") {
-          const on = i.options.getString("state", true) === "on";
-          if (sub === "antispam") cfg.antispam = on;
-          if (sub === "antiraid") cfg.antiraid = on;
-          if (sub === "antinuke") cfg.antinuke = on;
-          await persist(`${on ? "✅" : "⭕"} ${sub} is now ${on ? "**on**" : "**off**"}.`);
+        if (sub === "antispam") {
+          const cur = spamCfg(cfg);
+          cfg.antispam = {
+            enabled: i.options.getString("state", true) === "on",
+            max: i.options.getInteger("max") ?? cur.max,
+            windowSec: i.options.getInteger("window_seconds") ?? cur.windowSec,
+            timeoutMin: i.options.getInteger("timeout_minutes") ?? cur.timeoutMin,
+          };
+          const v = cfg.antispam;
+          await persist(
+            `${v.enabled ? "✅" : "⭕"} Anti-spam ${v.enabled ? "**on**" : "off"} — **${v.max} msgs / ${v.windowSec}s** → **${v.timeoutMin} min** timeout.`,
+          );
+          return;
+        }
+
+        if (sub === "antiraid") {
+          const cur = raidCfg(cfg);
+          cfg.antiraid = {
+            enabled: i.options.getString("state", true) === "on",
+            joins: i.options.getInteger("joins") ?? cur.joins,
+            windowSec: i.options.getInteger("window_seconds") ?? cur.windowSec,
+          };
+          const v = cfg.antiraid;
+          await persist(`${v.enabled ? "✅" : "⭕"} Anti-raid ${v.enabled ? "**on**" : "off"} — alert at **${v.joins} joins / ${v.windowSec}s**.`);
+          return;
+        }
+
+        if (sub === "antinuke") {
+          const cur = nukeCfg(cfg);
+          cfg.antinuke = {
+            enabled: i.options.getString("state", true) === "on",
+            actions: i.options.getInteger("actions") ?? cur.actions,
+            windowSec: i.options.getInteger("window_seconds") ?? cur.windowSec,
+          };
+          const v = cfg.antinuke;
+          await persist(`${v.enabled ? "✅" : "⭕"} Anti-nuke ${v.enabled ? "**on**" : "off"} — alert at **${v.actions} destructive actions / ${v.windowSec}s**.`);
           return;
         }
 

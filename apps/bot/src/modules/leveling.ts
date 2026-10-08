@@ -23,11 +23,15 @@ type LevelingConfig = {
   announceChannelId?: string | null;
   /** Role rewards: grant `roleId` when the member reaches `level` (cumulative). */
   levelRoles?: Array<{ level: number; roleId: string }>;
+  /** Per-server XP tuning (all optional — defaults apply). */
+  xpMin?: number;
+  xpMax?: number;
+  cooldownSec?: number;
 };
 
-const XP_MIN = 15;
-const XP_MAX = 25;
-const XP_COOLDOWN_MS = 60_000;
+const DEFAULT_XP_MIN = 15;
+const DEFAULT_XP_MAX = 25;
+const DEFAULT_XP_COOLDOWN_SEC = 60;
 const PAGE_SIZE = 10;
 const MAX_PAGE = 25;
 const COOLDOWN_CAP = 5_000;
@@ -39,11 +43,21 @@ const fmt = (n: number): string => n.toLocaleString("en-US");
 /** Bounded in-memory XP cooldowns: `${guildId}:${userId}` -> last grant (ms). */
 const lastGrant = new Map<string, number>();
 
-function onCooldown(guildId: string, userId: string): boolean {
+const clampNum = (n: number, lo: number, hi: number): number => Math.min(Math.max(Math.trunc(n), lo), hi);
+
+/** Per-server XP settings (defaults apply when unset — every number is overridable). */
+function xpSettings(cfg: LevelingConfig | null): { min: number; max: number; cooldownSec: number; cooldownMs: number } {
+  const min = clampNum(cfg?.xpMin ?? DEFAULT_XP_MIN, 1, 100);
+  const max = Math.max(clampNum(cfg?.xpMax ?? DEFAULT_XP_MAX, 1, 200), min);
+  const cooldownSec = clampNum(cfg?.cooldownSec ?? DEFAULT_XP_COOLDOWN_SEC, 5, 3600);
+  return { min, max, cooldownSec, cooldownMs: cooldownSec * 1000 };
+}
+
+function onCooldown(guildId: string, userId: string, cooldownMs: number): boolean {
   const key = `${guildId}:${userId}`;
   const now = Date.now();
   const last = lastGrant.get(key);
-  if (last !== undefined && now - last < XP_COOLDOWN_MS) return true;
+  if (last !== undefined && now - last < cooldownMs) return true;
   lastGrant.set(key, now);
   if (lastGrant.size > COOLDOWN_CAP) {
     let drop = 500;
@@ -142,14 +156,16 @@ export const levelingModule = defineModule({
       name: "messageCreate",
       async execute(message: Message, ctx: ModuleContext) {
         if (!message.inGuild() || message.author.bot) return;
-        if (onCooldown(message.guild.id, message.author.id)) return;
 
         const cfg = await services
           .getModuleConfig<LevelingConfig>(message.guild.id, "leveling")
           .catch(() => null);
         if (cfg?.enabled === false) return;
 
-        const amount = randomInt(XP_MIN, XP_MAX + 1);
+        const xp = xpSettings(cfg);
+        if (onCooldown(message.guild.id, message.author.id, xp.cooldownMs)) return;
+
+        const amount = randomInt(xp.min, xp.max + 1);
         const result = await services
           .grantXp(message.guild.id, message.author.id, amount)
           .catch(() => null);
@@ -169,6 +185,8 @@ export const levelingModule = defineModule({
       async execute(interaction) {
         const i = await ensureGuild(interaction);
         const target = i.options.getUser("user") ?? i.user;
+        const lvlCfg = await services.getModuleConfig<LevelingConfig>(i.guild.id, "leveling").catch(() => null);
+        const xpCfg = xpSettings(lvlCfg);
         const [row, rank, ranked] = await Promise.all([
           services.getMemberLevel(i.guild.id, target.id),
           services.getRank(i.guild.id, target.id),
@@ -188,7 +206,7 @@ export const levelingModule = defineModule({
                 : "Total **0 XP** · unranked — chat to join the board!",
             ].join("\n"),
           )
-          .setFooter({ text: "Chat to earn XP · one grant per minute" });
+          .setFooter({ text: `Chat to earn XP · one grant per ${xpCfg.cooldownSec}s` });
         await i.reply({ embeds: [card] });
       },
     },
@@ -235,6 +253,14 @@ export const levelingModule = defineModule({
             .addIntegerOption((o) =>
               o.setName("level").setDescription("Level whose reward to remove").setRequired(true).setMinValue(1).setMaxValue(500),
             ),
+        )
+        .addSubcommand((s) =>
+          s
+            .setName("xp")
+            .setDescription("Tune XP gain — your own numbers")
+            .addIntegerOption((o) => o.setName("min").setDescription("Minimum XP per message (1-100)").setMinValue(1).setMaxValue(100))
+            .addIntegerOption((o) => o.setName("max").setDescription("Maximum XP per message (1-200)").setMinValue(1).setMaxValue(200))
+            .addIntegerOption((o) => o.setName("cooldown_seconds").setDescription("Seconds between XP grants (5-3600)").setMinValue(5).setMaxValue(3600)),
         )
         .addSubcommand((s) => s.setName("config").setDescription("Show the current leveling settings")),
       async execute(interaction) {
@@ -283,6 +309,20 @@ export const levelingModule = defineModule({
           return;
         }
 
+        if (sub === "xp") {
+          const cur = xpSettings(cfg);
+          const min = i.options.getInteger("min") ?? cur.min;
+          const max = i.options.getInteger("max") ?? cur.max;
+          if (min > max) throw new UserError("Minimum XP can't be higher than maximum.");
+          const cooldownSec = i.options.getInteger("cooldown_seconds") ?? cur.cooldownSec;
+          cfg.xpMin = min;
+          cfg.xpMax = max;
+          cfg.cooldownSec = cooldownSec;
+          await services.setModuleConfig(i.guild.id, "leveling", cfg);
+          await i.reply(ephemeral(`XP settings: **${min}–${max} XP per message**, once every **${cooldownSec}s**.`));
+          return;
+        }
+
         const rewardLines =
           cfg.levelRoles && cfg.levelRoles.length > 0
             ? cfg.levelRoles.map((r) => `- Level **${r.level}** → <@&${r.roleId}>`).join("\n")
@@ -294,7 +334,7 @@ export const levelingModule = defineModule({
               `Announce channel: ${cfg.announceChannelId ? `<#${cfg.announceChannelId}>` : "*off*"}`,
               `Role rewards:\n${rewardLines}`,
               "",
-              `Members earn **${XP_MIN}–${XP_MAX} XP per message** (once a minute) on the \`5L² + 50L + 100\` curve.`,
+              `Members earn **${xpSettings(cfg).min}–${xpSettings(cfg).max} XP per message**, once every **${xpSettings(cfg).cooldownSec}s**, on the \`5L² + 50L + 100\` curve. Tune with /levels xp.`,
             ].join("\n"),
           )
           .setFooter({ text: "Level commands: /rank · /leaderboard" });
