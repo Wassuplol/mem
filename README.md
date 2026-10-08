@@ -32,7 +32,7 @@ The big incumbents charge for their best features. Mem's entire model is the opp
 - 🪶 **Light on RAM.** Cache-disciplined by design (message/presence caches off, member caches capped) — check `/botinfo` for the live number.
 - ⚡ **Built in a day.** 30+ commits, one developer (and one relentless AI agent), full test coverage of every shipped feature.
 
-## 🚀 Shipped (v0.1) — 43 commands · 17 modules
+## 🚀 Shipped (v0.1) — 51 commands · 18 modules
 
 | Module | What you get today |
 |---|---|

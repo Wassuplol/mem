@@ -71,3 +71,17 @@ and has no cold starts anywhere in the stack.
 - **Memory floor**: Mem's bot targets ~50-100 MB RSS; Postgres+Redis add ~150-250 MB. Any option above fits.
 - **Uptime**: Discord gateways reconnect automatically; the durable scheduler (tempbans, giveaways) survives restarts because every pending task lives in Postgres.
 - **Scaling out**: past ~2,500 guilds you shard the bot; the kernel already loads modules lazily, and all state is external (Postgres/Redis), so nothing blocks sharding later.
+
+## 🎵 Music (Lavalink) — included
+
+The compose file ships a `lavalink` service (audio node). It is optional: without
+`LAVALINK_PASSWORD` the bot simply keeps the music module idle.
+
+1. Put a password in `.env` (any string): `LAVALINK_PASSWORD=something-random`
+2. Start it: `docker compose up -d lavalink` (or however you run the stack).
+3. The node listens on `127.0.0.1:2333`; the YouTube plugin ships under
+   `infra/lavalink/plugins/` and sources (YouTube / SoundCloud / Bandcamp / Twitch / Vimeo)
+   are enabled in `infra/lavalink/application.yml`.
+
+Resource note: Lavalink adds ~250 MB RAM. On the Oracle Always Free VM this is a
+non-issue; on tiny sandboxes (512 MB) run music only if you have headroom.

@@ -33,6 +33,18 @@ services:
       timeout: 3s
       retries: 20
 
+  # Music — Lavalink audio node (YouTube via youtube-source plugin).
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4
+    restart: unless-stopped
+    environment:
+      LAVALINK_PASSWORD: ${LAVALINK_PASSWORD:-youshallnotpass}
+    volumes:
+      - ./infra/lavalink/application.yml:/opt/Lavalink/application.yml:ro
+      - ./infra/lavalink/plugins:/opt/Lavalink/plugins
+    ports:
+      - "127.0.0.1:2333:2333"
+
   # Bot + dashboard containers join this file in a later P1 step (Dockerfiles pending).
   # For now: `pnpm infra:up` starts the databases, `pnpm dev:bot` runs the bot locally.
 

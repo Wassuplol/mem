@@ -253,7 +253,7 @@ Engineering gotchas (from builders who hit the wall):
 
 | Command | Notes | Status |
 | --- | --- | --- |
-| `/music` | play/skip/queue/etc. (Lavalink; P5 per MASTER-PLAN) | 📅 |
+| `/play` `/skip` `/stop` `/pause` `/nowplaying` `/queue` `/volume` `/loop` | Lavalink node (docker service) + youtube / soundcloud / bandcamp / twitch sources; buttons on the now-playing card — **shipped** | ✅ |
 
 ### T. Importers — 1
 
@@ -643,14 +643,15 @@ Status: L = live, N = next (buildable in current phases), P = planned (later/inf
 
 ### S. Music (Lavalink, phase 3+) - 12
 
-- [P] `/play` - join + play
-- [P] `/skip` - skip track
-- [P] `/stop` - stop + leave
-- [P] `/queue` - show queue
-- [P] `/nowplaying` - current track
-- [P] `/loop` - loop modes
+- [L] `/play` - join + play (search or URL, playlists)
+- [L] `/skip` - skip track
+- [L] `/stop` - stop + leave
+- [L] `/pause` - pause/resume (toggle)
+- [L] `/queue` - show queue (paged)
+- [L] `/nowplaying` - current track + buttons
+- [L] `/loop` - loop modes
 - [P] `/shuffle` - shuffle queue
-- [P] `/volume` - volume
+- [L] `/volume` - volume (1-200)
 - [P] `/seek` - seek
 - [P] `/filter` - audio filters
 - [P] `/lyrics` - lyrics lookup

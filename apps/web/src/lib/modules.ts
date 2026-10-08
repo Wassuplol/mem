@@ -189,8 +189,9 @@ export const MODULES: ModuleInfo[] = [
     id: "music",
     name: "Music",
     icon: Music,
-    description: "Lavalink-powered playback with queues and filters.",
-    status: "soon",
+    description: "Lavalink-powered playback — YouTube, SoundCloud and friends; queues, loops, volume and buttons.",
+    status: "live",
+    commands: 8,
     accent: "from-purple-500/25 to-violet-500/10 text-purple-300",
   },
 ];

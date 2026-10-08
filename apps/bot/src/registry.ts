@@ -11,6 +11,7 @@ import { remindersModule } from "./modules/reminders";
 import { rolesModule } from "./modules/roles";
 import { temprolesModule } from "./modules/temproles";
 import { automodModule } from "./modules/automod";
+import { musicModule } from "./modules/music";
 import { securityModule } from "./modules/security";
 import { ticketsModule } from "./modules/tickets";
 import { verificationModule } from "./modules/verification";
@@ -36,6 +37,7 @@ for (const feature of [
   securityModule,
   automodModule,
   verificationModule,
+  musicModule,
 ]) {
   registry.register(feature);
 }
