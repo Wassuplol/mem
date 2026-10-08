@@ -7,7 +7,7 @@ import {
 import { defineModule } from "@mem/core";
 import { COLORS, embed } from "../lib/embed";
 import { formatDuration, parseDuration } from "../lib/duration";
-import { ensureGuild, requirePermissions, UserError } from "../lib/permissions";
+import { ensureGuild, guardTarget, requirePermissions, UserError } from "../lib/permissions";
 import { services } from "../lib/services";
 import { registerTaskHandler } from "../lib/scheduler";
 
@@ -20,6 +20,7 @@ async function applyTimeout(i: Cached): Promise<void> {
     await i.reply({ content: "That user is not a member of this server.", flags: 64 });
     return;
   }
+  guardTarget(i, member);
   const minutes = i.options.getInteger("minutes", true);
   const reason = i.options.getString("reason") ?? "No reason provided";
   await member.timeout(minutes * 60_000, reason);
@@ -227,6 +228,7 @@ export const moderationModule = defineModule({
           await i.reply({ content: "That user is not a member of this server.", flags: 64 });
           return;
         }
+        guardTarget(i, member);
         const reason = i.options.getString("reason") ?? "No reason provided";
         await member.kick(reason);
         const record = await services.createCase({
@@ -257,6 +259,8 @@ export const moderationModule = defineModule({
         const i = await ensureGuild(interaction);
         if (!(await requirePermissions(i, PermissionFlagsBits.BanMembers))) return;
         const target = i.options.getUser("user", true);
+        const targetMember = await i.guild.members.fetch(target.id).catch(() => null);
+        if (targetMember) guardTarget(i, targetMember);
         const reason = i.options.getString("reason") ?? "No reason provided";
         await i.guild.members.ban(target.id, { reason: `${reason} (by ${i.user.tag})` });
         const record = await services.createCase({
@@ -323,6 +327,8 @@ export const moderationModule = defineModule({
         const i = await ensureGuild(interaction);
         if (!(await requirePermissions(i, PermissionFlagsBits.BanMembers))) return;
         const target = i.options.getUser("user", true);
+        const targetMember = await i.guild.members.fetch(target.id).catch(() => null);
+        if (targetMember) guardTarget(i, targetMember);
         if (target.id === i.user.id) throw new UserError("You cannot ban yourself.");
         const durMs = parseDuration(i.options.getString("duration", true));
         if (durMs === null) throw new UserError("Could not read that duration - try `1h`, `2d` or `1w`.");

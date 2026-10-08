@@ -238,6 +238,8 @@ Engineering gotchas (from builders who hit the wall):
 | Command | Notes | Status |
 | --- | --- | --- |
 | `/automod` | sub: rulesets / toggle / logs / violations; built-in: invites, links, mentions, caps, words, spam (YAGPDB-pattern, free) | 🔜 |
+| `/security` | anti-spam (auto-timeout) / anti-raid / anti-nuke + trust / screening / quarantine / alert channel — **shipped** | ✅ |
+| `/lockdown` | panic mode: FREEZE every channel (per-channel overwrite snapshots, exact restore on end) — **shipped** | ✅ |
 | `/antinuke` | Wick-style guardian: mass-action detection, quarantine, panic mode, backups (audit-log driven) | 📅 |
 
 ### R. AI — 1
@@ -610,6 +612,8 @@ Status: L = live, N = next (buildable in current phases), P = planned (later/inf
 
 ### Q. Automod & security - 13
 
+- [L] `/security` - anti-spam / anti-raid / anti-nuke / screening / alertchannel / trust / strip / restore / config
+- [L] `/lockdown` - panic mode: freeze the server, restore exactly on end
 - [N] `/automod enable` - turn on native AutoMod rules
 - [N] `/automod disable` - off
 - [N] `/automod status` - current rules

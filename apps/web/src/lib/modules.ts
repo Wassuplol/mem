@@ -9,6 +9,7 @@ import {
   Music,
   ScrollText,
   Shield,
+  ShieldAlert,
   Sparkles,
   Ticket,
   Timer,
@@ -146,6 +147,15 @@ export const MODULES: ModuleInfo[] = [
     status: "live",
     commands: 1,
     accent: "from-teal-500/25 to-emerald-500/10 text-teal-300",
+  },
+  {
+    id: "security",
+    name: "Security",
+    icon: ShieldAlert,
+    description: "Anti-raid, anti-spam, anti-nuke, young-account screening, quarantine and one-switch lockdown. Wick's paid edge — free here.",
+    status: "live",
+    commands: 2,
+    accent: "from-red-500/25 to-rose-500/10 text-red-300",
   },
   {
     id: "ai",
