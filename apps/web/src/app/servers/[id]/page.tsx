@@ -9,18 +9,13 @@ import { ArrowLeft, ArrowUpRight, Crown, ExternalLink, Server as ServerIcon, Shi
 import { auth } from "@/lib/auth";
 import { fetchGuildDetail } from "@/lib/guild-detail";
 import { MODULES } from "@/lib/modules";
+import { ModuleGrid } from "@/components/servers/module-grid";
 import { AppShell, INVITE_URL } from "@/components/app-shell";
 import { SignInButton } from "@/components/sign-in-button";
 
 const iconUrl = (guildId: string, icon: string) => `https://cdn.discordapp.com/icons/${guildId}/${icon}.png?size=256`;
 
 const LABEL = "text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600";
-
-function updatedLabel(iso: string | null): string {
-  if (!iso) return "Configured";
-  const d = new Date(iso);
-  return `Updated ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
-}
 
 function ServerSkeleton() {
   return (
@@ -84,7 +79,6 @@ async function ServerContent({ id }: { id: string }) {
   }
 
   const { guild, joined, modules, stats } = result.detail;
-  const stateById = new Map(modules.map((m) => [m.id, m]));
   const liveModules = MODULES.filter((m) => m.status === "live").length;
 
   return (
@@ -183,60 +177,7 @@ async function ServerContent({ id }: { id: string }) {
             {joined ? `${modules.length} configured · ` : ""}{liveModules} live
           </span>
         </div>
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {MODULES.map((m) => {
-            const Icon = m.icon;
-            const configured = stateById.has(m.id);
-            const state = stateById.get(m.id);
-            return (
-              <li key={m.id} className={`glass card-lift animate-fade-up rounded-2xl p-5 ${m.status === "soon" ? "opacity-70" : ""}`}>
-                <div className="flex items-start gap-4">
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${m.accent}`}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-[14.5px] font-semibold">{m.name}</p>
-                      {m.status === "live" ? (
-                        m.commands ? (
-                          <span className="font-hud rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-zinc-500">
-                            {m.commands} cmds
-                          </span>
-                        ) : null
-                      ) : (
-                        <span className="font-hud rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-zinc-500">
-                          soon
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-zinc-400">{m.description}</p>
-                    {m.status === "live" && (
-                      <p className="mt-2.5 flex items-center gap-1.5 text-[11.5px]">
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            !joined ? "bg-zinc-600" : configured ? "bg-emerald-400" : "bg-zinc-600"
-                          }`}
-                        />
-                        <span className={!joined ? "text-zinc-600" : configured ? "text-emerald-200/90" : "text-zinc-500"}>
-                          {!joined
-                            ? "Live once Mem joins"
-                            : configured
-                              ? updatedLabel(state?.updatedAt ?? null)
-                              : "Default settings"}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="text-[11.5px] leading-relaxed text-zinc-600">
-          Configure everything with{" "}
-          <code className="rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono">/help</code>{" "}
-          in Discord — dashboard toggles are on the roadmap.
-        </p>
+        <ModuleGrid guildId={guild.id} joined={joined} modules={modules} />
       </section>
     </div>
   );

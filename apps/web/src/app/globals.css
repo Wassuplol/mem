@@ -243,3 +243,14 @@ html._boot-lock { overflow: hidden; }
 /* ---------- tilt cards ---------- */
 .tilt-card { transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; will-change: transform; }
 .tilt-card:hover { border-color: rgba(139, 92, 246, 0.38); box-shadow: 0 18px 48px -18px rgba(139, 92, 246, 0.35); }
+
+/* Floating widgets step aside while a modal/drawer is open (root-class driven — no JS store needed). */
+.memi-widget {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+html.mem-modal-open .memi-widget {
+  opacity: 0 !important;
+  transform: translateY(0.75rem) !important;
+  pointer-events: none !important;
+}
+

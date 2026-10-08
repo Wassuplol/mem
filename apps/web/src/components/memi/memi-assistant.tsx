@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Send, X } from "lucide-react";
+import { useSystem } from "@/lib/system";
 
 const ChibiCanvas = dynamic(() => import("./chibi").then((m) => m.ChibiCanvas), { ssr: false });
 
@@ -35,6 +36,7 @@ const QUICK = ["What can Mem do?", "Help me set things up", "Where are my server
 
 /** Memi: the floating chibi AI assistant (bottom-right, every page). */
 export function MemiAssistant() {
+  const modalOpen = useSystem((s) => s.modalOpen);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -108,7 +110,15 @@ export function MemiAssistant() {
   if (pathname === "/") return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
+    <div
+      className="memi-widget pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3"
+      style={{
+        opacity: modalOpen ? 0 : 1,
+        transform: modalOpen ? "translateY(0.75rem)" : undefined,
+        pointerEvents: modalOpen ? "none" : undefined,
+      }}
+      aria-hidden={modalOpen || undefined}
+    >
       {open && (
         <div className="glass animate-fade-up pointer-events-auto flex w-[340px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/50">
           <div className="flex items-center gap-2.5 border-b border-white/[0.07] px-4 py-3">

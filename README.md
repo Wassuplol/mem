@@ -27,7 +27,7 @@ The big incumbents charge for their best features. Mem's entire model is the opp
 
 - 🆓 **Everything free. Forever.** No premium tiers. No paywalled "core". No XP held hostage.
 - 🧩 **Modular architecture.** A tiny kernel (commands + events + buttons/selects/modals + autocomplete) with self-contained feature modules.
-- 🖥️ **A real dashboard.** Discord OAuth login, your server list, module configuration — a proper Next.js control room, not a crippled afterthought.
+- 🖥️ **A real dashboard.** Discord OAuth login, your server list, and click-to-configure module cards — thresholds, channels, roles, XP rates — written per-server and synced to the bot instantly. A proper Next.js control room, not a crippled afterthought.
 - 🐳 **Docker-first.** One command to run the whole stack — on your laptop, a VPS, anywhere.
 - 🪶 **Light on RAM.** Cache-disciplined by design (message/presence caches off, member caches capped) — check `/botinfo` for the live number.
 - ⚡ **Built in a day.** 30+ commits, one developer (and one relentless AI agent), full test coverage of every shipped feature.
