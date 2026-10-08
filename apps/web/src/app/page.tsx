@@ -74,10 +74,12 @@ export default function Home() {
         <EntryGate onEnter={onEnter} />
 
         <div
-          data-hero-content
           className="pointer-events-none relative z-10 flex w-full flex-col items-center text-center md:max-w-xl md:items-start md:text-left"
           style={entered ? undefined : { opacity: 0 }}
         >
+          {/* The wrapper owns the gate hide-state; data-hero-content is animated
+              by GSAP and must always start from a real opacity of 1. */}
+          <div data-hero-content>
           <div data-hero-intro className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500 text-[15px] font-black text-white shadow-lg shadow-violet-600/30">
               M
@@ -137,6 +139,7 @@ export default function Home() {
                 <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-zinc-500">{s.l}</p>
               </div>
             ))}
+          </div>
           </div>
         </div>
 

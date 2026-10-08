@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Headphones, Power } from "lucide-react";
 import { gsap } from "@/lib/anim";
 import { requestAudioStart } from "@/lib/audio-bus";
@@ -29,26 +29,61 @@ export function EntryGate({ onEnter }: { onEnter: () => void }) {
     setVisible(true);
   }, [onEnter]);
 
-  const enter = () => {
-    window.sessionStorage.setItem(KEY, "1");
-    requestAudioStart();
-    const root = rootRef.current;
-    if (!root) {
-      setVisible(false);
-      onEnter();
-      return;
-    }
-    const tl = gsap.timeline({
-      onComplete: () => {
+  const dismissedRef = useRef(false);
+
+  /** Retract the gate. Audio only on an explicit click - never on scroll. */
+  const dismiss = useCallback(
+    (withAudio: boolean) => {
+      if (dismissedRef.current) return;
+      dismissedRef.current = true;
+      window.sessionStorage.setItem(KEY, "1");
+      if (withAudio) requestAudioStart();
+      const root = rootRef.current;
+      if (!root) {
         setVisible(false);
         onEnter();
-      },
-    });
-    tl.to("[data-gate-panel]", { y: -24, opacity: 0, duration: 0.5, ease: "power2.in" }, 0)
-      .to("[data-gate-bar-top]", { yPercent: -100, duration: 0.9, ease: "power3.inOut" }, 0.15)
-      .to("[data-gate-bar-bottom]", { yPercent: 100, duration: 0.9, ease: "power3.inOut" }, 0.15)
-      .to(root, { opacity: 0, duration: 0.4 }, 0.7);
-  };
+        return;
+      }
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setVisible(false);
+          onEnter();
+        },
+      });
+      tl.to("[data-gate-panel]", { y: -24, opacity: 0, duration: 0.5, ease: "power2.in" }, 0)
+        .to("[data-gate-bar-top]", { yPercent: -100, duration: 0.9, ease: "power3.inOut" }, 0.15)
+        .to("[data-gate-bar-bottom]", { yPercent: 100, duration: 0.9, ease: "power3.inOut" }, 0.15)
+        .to(root, { opacity: 0, duration: 0.4 }, 0.7);
+    },
+    [onEnter],
+  );
+
+  /* Scrolling also dismisses the gate - the letterbox bars and the card must
+     never linger over the page (they used to stay until an INITIALIZE click). */
+  useEffect(() => {
+    if (!visible) return;
+    // Any real scroll intent retracts the gate. We listen to scroll AND
+    // wheel/touchmove because Lenis drives scrolling itself and native scroll
+    // events can be unreliable while it owns the scroll.
+    const maybeDismiss = () => {
+      if (window.scrollY > 100) dismiss(false);
+    };
+    let wheelAcc = 0;
+    const onWheel = (e: WheelEvent) => {
+      wheelAcc += Math.abs(e.deltaY);
+      if (wheelAcc > 60) dismiss(false);
+    };
+    const onTouch = () => dismiss(false);
+    maybeDismiss(); // in case the page is already scrolled (restoration, anchor)
+    window.addEventListener("scroll", maybeDismiss, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", maybeDismiss);
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchmove", onTouch);
+    };
+  }, [visible, dismiss]);
 
   if (!visible) return null;
   return (
@@ -71,7 +106,7 @@ export function EntryGate({ onEnter }: { onEnter: () => void }) {
             best experienced with sound on
           </p>
           <button
-            onClick={enter}
+            onClick={() => dismiss(true)}
             data-cursor="enter"
             className="btn-hero hero-glow group mt-7 inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-500 px-8 py-3.5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
           >

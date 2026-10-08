@@ -27,6 +27,15 @@ export function CustomCursor() {
     let targetScale = 1;
     let raf = 0;
     let visible = false;
+    // The hero "scroll" hint is a first-impression cue only - once the user has
+    // scrolled (or anywhere near a button), it must never draw over other text.
+    let scrolled = window.scrollY > 60;
+    const onScroll = () => {
+      scrolled = window.scrollY > 60;
+    };
+    const onWheel = () => {
+      scrolled = true;
+    };
 
     const show = () => {
       if (!visible) {
@@ -45,12 +54,15 @@ export function CustomCursor() {
       const interactive = t?.closest?.("a, button, input, textarea, select, [role='button']");
       const hero = t?.closest?.("[data-hero]");
       const tag = tagged?.dataset.cursor;
-      if (tag && tag !== "wheel") {
+      // Interactive elements always win over the hero "scroll" hint - the hint
+      // must never draw its label on top of a button's own text.
+      const wheelHint = !scrolled && !interactive && (tag === "wheel" || !!hero);
+      if (tag && tag !== "wheel" && !wheelHint) {
         label.textContent = tag;
         ring.classList.add("cursor-ring-label");
         ring.classList.remove("cursor-ring-wheel");
         targetScale = 2.6;
-      } else if (tag === "wheel" || (!!hero && !interactive)) {
+      } else if (wheelHint) {
         label.textContent = "scroll";
         ring.classList.add("cursor-ring-wheel");
         ring.classList.remove("cursor-ring-label");
@@ -80,10 +92,14 @@ export function CustomCursor() {
     };
 
     window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: true });
     document.documentElement.addEventListener("mouseleave", onLeave);
     raf = requestAnimationFrame(loop);
     return () => {
       window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", onWheel);
       document.documentElement.removeEventListener("mouseleave", onLeave);
       cancelAnimationFrame(raf);
       document.documentElement.classList.remove("has-custom-cursor");

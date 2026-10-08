@@ -28,6 +28,8 @@ export function initHeroScroll(): () => void {
     },
   });
 
+  // The animated [data-hero-content] always starts at opacity 1 (its wrapper
+  // holds the gate's hidden state), so a plain .to() captures the right start.
   const parallax = gsap.to(content, {
     yPercent: -8,
     opacity: 0.35,
