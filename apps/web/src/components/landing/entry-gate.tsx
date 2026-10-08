@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Headphones, Power } from "lucide-react";
-import gsap from "gsap";
+import { gsap } from "@/lib/anim";
 import { requestAudioStart } from "@/lib/audio-bus";
 
 const KEY = "mem-entered";

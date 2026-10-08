@@ -1,12 +1,10 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Component, type ReactNode } from "react";
+import { Component, Suspense, type ReactNode } from "react";
 import { VrmModel, type MemiMode } from "./vrm-model";
 
 export type { MemiMode };
-
-const MODEL_URL = "/models/memi.vrm";
 
 /** If the VRM fails to load, degrade gracefully to a glowing orb. */
 class VrmBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -30,18 +28,16 @@ class VrmBoundary extends Component<{ children: ReactNode }, { failed: boolean }
   }
 }
 
-/** Memi - the VRM avatar (VTuber model), animated. */
-export function Chibi({ mode = "idle", position = [0, 0, 0] }: { mode?: MemiMode; position?: [number, number, number] }) {
+/** Memi itself - renders inside an existing canvas (e.g. the hero scene). */
+export function Chibi({ mode = "idle", bust = false, hero = false, thinkingIntensity = 0 }: { mode?: MemiMode; bust?: boolean; hero?: boolean; thinkingIntensity?: number }) {
   return (
-    <group position={position}>
-      <VrmBoundary>
-        <VrmModel mode={mode} />
-      </VrmBoundary>
-    </group>
+    <VrmBoundary>
+      <VrmModel mode={mode} bust={bust} hero={hero} thinkingIntensity={thinkingIntensity} />
+    </VrmBoundary>
   );
 }
 
-/** Widget canvas - bust framing (head + shoulders), like a VTuber stream overlay. */
+/** Standalone canvas for the corner widget - bust framing. */
 export function ChibiCanvas({ mode = "idle" }: { mode?: MemiMode }) {
   return (
     <Canvas
@@ -55,7 +51,9 @@ export function ChibiCanvas({ mode = "idle" }: { mode?: MemiMode }) {
       <directionalLight position={[2, 3, 2.5]} intensity={1.85} />
       <pointLight position={[-2.4, 1.6, -1.5]} intensity={0.8} color="#22d3ee" />
       <pointLight position={[2.4, 0.8, 1.5]} intensity={0.5} color="#8b5cf6" />
-      <Chibi mode={mode} />
+      <Suspense fallback={null}>
+        <Chibi mode={mode} bust />
+      </Suspense>
     </Canvas>
   );
 }

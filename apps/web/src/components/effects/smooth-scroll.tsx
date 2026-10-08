@@ -2,10 +2,7 @@
 
 import Lenis from "lenis";
 import { useEffect } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { gsap, ScrollTrigger } from "@/lib/anim";
 
 /** Buttery Lenis smooth scroll, synced to GSAP's ticker + ScrollTrigger. */
 export function SmoothScroll() {

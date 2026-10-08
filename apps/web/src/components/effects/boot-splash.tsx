@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 const LINES = ["INITIALIZING CORE", "LINKING GATEWAYS", "LOADING AVATAR", "CALIBRATING STARS"];
+const TOTAL_MS = 1900;
 
 /** Once-per-session boot sequence - an "INITIATE SYSTEM EXPERIENCE" moment. */
 export function BootSplash() {
@@ -11,36 +12,58 @@ export function BootSplash() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (window.sessionStorage.getItem("mem-booted") === "1") {
+    if (
+      window.sessionStorage.getItem("mem-booted") === "1" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       setPhase("done");
       return;
     }
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+
+    let iv = 0;
+    let to = 0;
+    const skip = () => {
+      window.clearInterval(iv);
+      window.clearTimeout(to);
+      window.sessionStorage.setItem("mem-booted", "1");
+      document.documentElement.classList.remove("_boot-lock");
       setPhase("done");
-      return;
-    }
-    window.sessionStorage.setItem("mem-booted", "1");
+    };
+
+    document.documentElement.classList.add("_boot-lock");
     const started = Date.now();
-    const total = 1900;
-    const iv = window.setInterval(() => {
+    iv = window.setInterval(() => {
       const elapsed = Date.now() - started;
-      const pct = Math.min(100, Math.round((elapsed / total) * 100));
+      const pct = Math.min(100, Math.round((elapsed / TOTAL_MS) * 100));
       setProgress(pct);
-      setLine(Math.min(LINES.length - 1, Math.floor((elapsed / total) * LINES.length)));
+      setLine(Math.min(LINES.length - 1, Math.floor((elapsed / TOTAL_MS) * LINES.length)));
       if (pct >= 100) {
         window.clearInterval(iv);
+        window.sessionStorage.setItem("mem-booted", "1");
+        document.documentElement.classList.remove("_boot-lock");
         setPhase("leaving");
-        window.setTimeout(() => setPhase("done"), 700);
+        to = window.setTimeout(() => setPhase("done"), 700);
       }
     }, 55);
-    return () => window.clearInterval(iv);
+
+    to = window.setTimeout(skip, 8000);
+    window.addEventListener("keydown", skip, { once: true });
+    window.addEventListener("click", skip, { once: true });
+
+    return () => {
+      window.clearInterval(iv);
+      window.clearTimeout(to);
+      window.removeEventListener("keydown", skip);
+      window.removeEventListener("click", skip);
+      document.documentElement.classList.remove("_boot-lock");
+    };
   }, []);
 
   if (phase === "done") return null;
   return (
     <div
       aria-hidden
-      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#08080d] transition-opacity duration-[700ms] ${
+      className={`fixed inset-0 z-[200] flex cursor-pointer flex-col items-center justify-center bg-[#08080d] transition-opacity duration-[700ms] ${
         phase === "leaving" ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
     >
@@ -62,7 +85,10 @@ export function BootSplash() {
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="mt-8 text-[10px] uppercase tracking-[0.3em] text-zinc-700">a world for your community</p>
+      <div className="mt-8 space-y-1 text-center">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-700">a world for your community</p>
+        <p className="text-[9.5px] uppercase tracking-[0.2em] text-zinc-700/70">click / key to skip</p>
+      </div>
     </div>
   );
 }

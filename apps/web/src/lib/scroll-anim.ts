@@ -1,14 +1,11 @@
 "use client";
 
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { gsap, ScrollTrigger } from "./anim";
+import { useSystem } from "./system";
 
-gsap.registerPlugin(ScrollTrigger);
-
-let heroProgress = 0;
 /** 0..1 progress of the pinned hero — read by the WebGL dolly each frame. */
 export function heroScrollProgress(): number {
-  return heroProgress;
+  return useSystem.getState().heroProgress;
 }
 
 /** Pin the hero and drive content parallax + camera dolly. Returns cleanup. */
@@ -27,7 +24,7 @@ export function initHeroScroll(): () => void {
     pin: true,
     scrub: 0.6,
     onUpdate: (self) => {
-      heroProgress = self.progress;
+      useSystem.getState().setHeroProgress(self.progress);
     },
   });
 
@@ -39,7 +36,7 @@ export function initHeroScroll(): () => void {
   });
 
   return () => {
-    heroProgress = 0;
+    useSystem.getState().setHeroProgress(0);
     trigger.kill();
     parallax.scrollTrigger?.kill();
     parallax.kill();

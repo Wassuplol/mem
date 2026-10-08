@@ -43,16 +43,25 @@ export function CustomCursor() {
       const t = e.target as HTMLElement | null;
       const tagged = t?.closest?.("[data-cursor]") as HTMLElement | null;
       const interactive = t?.closest?.("a, button, input, textarea, select, [role='button']");
-      if (tagged?.dataset.cursor) {
-        label.textContent = tagged.dataset.cursor;
+      const hero = t?.closest?.("[data-hero]");
+      const tag = tagged?.dataset.cursor;
+      if (tag && tag !== "wheel") {
+        label.textContent = tag;
         ring.classList.add("cursor-ring-label");
+        ring.classList.remove("cursor-ring-wheel");
         targetScale = 2.6;
+      } else if (tag === "wheel" || (!!hero && !interactive)) {
+        label.textContent = "scroll";
+        ring.classList.add("cursor-ring-wheel");
+        ring.classList.remove("cursor-ring-label");
+        targetScale = 1.35;
       } else {
         label.textContent = "";
         ring.classList.remove("cursor-ring-label");
+        ring.classList.remove("cursor-ring-wheel");
         targetScale = interactive ? 1.7 : 1;
       }
-      ring.classList.toggle("cursor-ring-active", !!interactive || !!tagged);
+      ring.classList.toggle("cursor-ring-active", !!interactive || (!!tag && tag !== "wheel"));
     };
 
     const onLeave = () => {

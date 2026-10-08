@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Braces, Brain, LayoutDashboard, Server } from "lucide-react";
+import { useEffect } from "react";
+import { ArrowUpRight, Braces, Brain, LayoutDashboard, Server, type LucideIcon } from "lucide-react";
 import { GithubMark } from "./icons";
 import { MODULES } from "@/lib/modules";
 import { AuthChip } from "./auth-chip";
+import { useSystem } from "@/lib/system";
 
 export const INVITE_URL =
   "https://discord.com/oauth2/authorize?client_id=1557317832146944070&permissions=8&scope=bot+applications.commands";
 
-const NAV = [
+const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/servers", label: "Servers", icon: Server },
   { href: "/docs/api", label: "API docs", icon: Braces },
@@ -26,16 +28,29 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const setSection = useSystem((s) => s.setSection);
+
+  useEffect(() => {
+    setSection(
+      pathname.startsWith("/dashboard")
+        ? "dashboard"
+        : pathname.startsWith("/servers")
+          ? "servers"
+          : pathname.startsWith("/docs")
+            ? "docs"
+            : "landing",
+    );
+  }, [pathname, setSection]);
 
   return (
     <div className="flex min-h-screen">
       {/* ---------- sidebar ---------- */}
-      <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-white/[0.06] bg-white/[0.015] backdrop-blur-xl md:flex">
-        <Link href="/" className="flex items-center gap-3 px-5 pb-5 pt-6">
+      <aside className="glass sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-white/[0.06] bg-white/[0.015] backdrop-blur-xl md:flex">
+        <Link href="/" className="flex items-center gap-3 px-5 pb-5 pt-6" data-cursor="home">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-600/30">
             <Brain className="h-5 w-5 text-white" />
           </span>
-          <span className="text-[17px] font-bold tracking-tight">Mem</span>
+          <span className="font-display text-[17px] font-bold tracking-tight">Mem</span>
           <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
             v0.1
           </span>
@@ -43,7 +58,7 @@ export function AppShell({
 
         <nav className="flex-1 space-y-7 overflow-y-auto px-3 pb-4">
           <div className="space-y-1">
-            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+            <p className="px-3 pb-1.5 font-hud text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
               Control room
             </p>
             {NAV.map((item) => {
@@ -57,6 +72,7 @@ export function AppShell({
                       ? "bg-gradient-to-r from-violet-500/20 to-cyan-500/10 text-violet-100 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.25)]"
                       : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100"
                   }`}
+                  data-cursor={item.label.toLowerCase()}
                 >
                   <item.icon className={`h-4 w-4 ${active ? "text-violet-300" : "text-zinc-500"}`} />
                   {item.label}
@@ -66,7 +82,7 @@ export function AppShell({
           </div>
 
           <div className="space-y-0.5">
-            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+            <p className="px-3 pb-1.5 font-hud text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
               Modules
             </p>
             {MODULES.map((m) => (
@@ -79,7 +95,7 @@ export function AppShell({
                 {m.status === "live" ? (
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" title="live" />
                 ) : (
-                  <span className="text-[9px] uppercase tracking-wider text-zinc-600">soon</span>
+                  <span className="font-hud text-[9px] uppercase tracking-wider text-zinc-600">soon</span>
                 )}
               </div>
             ))}
@@ -92,6 +108,7 @@ export function AppShell({
             target="_blank"
             rel="noreferrer"
             className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-500 px-3 py-2.5 text-[13px] font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:brightness-110 active:scale-[0.99]"
+            data-cursor="invite"
           >
             Invite Mem
             <ArrowUpRight className="h-3.5 w-3.5" />
@@ -120,7 +137,7 @@ export function AppShell({
                 <Brain className="h-4 w-4 text-white" />
               </span>
             </Link>
-            <h2 className="truncate text-[15px] font-semibold tracking-tight">{title}</h2>
+            <h2 className="truncate font-display text-[15px] font-semibold tracking-tight">{title}</h2>
             {subtitle && (
               <span className="hidden truncate text-xs text-zinc-500 lg:block">{subtitle}</span>
             )}

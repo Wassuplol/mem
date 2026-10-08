@@ -171,6 +171,9 @@ body {
 .font-display { font-family: var(--font-display), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif; }
 .font-hud { font-family: var(--font-hud), ui-monospace, monospace; }
 
+/* ---------- boot splash lock ---------- */
+html._boot-lock { overflow: hidden; }
+
 /* ---------- custom cursor (fine pointers only) ---------- */
 .cursor-dot, .cursor-ring { display: none; }
 .has-custom-cursor, .has-custom-cursor a, .has-custom-cursor button,
@@ -192,6 +195,20 @@ body {
   transition: opacity 0.25s ease, border-color 0.25s ease, background 0.25s ease;
 }
 .cursor-ring-active { border-color: rgba(34, 211, 238, 0.8); background: rgba(34, 211, 238, 0.06); }
+.cursor-ring-wheel {
+  border-color: transparent;
+  background: rgba(139, 92, 246, 0.08);
+}
+.cursor-ring-wheel::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  border: 1px dashed rgba(167, 139, 250, 0.9);
+  animation: wheel-spin 6s linear infinite;
+}
+.cursor-ring-wheel .cursor-label { color: #c4b5fd; }
+@keyframes wheel-spin { to { rotate: 1turn; } }
 .cursor-ring-label {
   border-color: rgba(34, 211, 238, 0.9);
   background: rgba(8, 8, 13, 0.72);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUpRight, Sparkles } from "lucide-react";
-import gsap from "gsap";
+import { gsap } from "@/lib/anim";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { GithubMark } from "@/components/icons";
 import { SignInButton } from "@/components/sign-in-button";

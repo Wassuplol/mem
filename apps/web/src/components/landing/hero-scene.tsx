@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Chibi, type MemiMode } from "@/components/memi/chibi";
 import { heroScrollProgress } from "@/lib/scroll-anim";
@@ -132,7 +132,7 @@ function Rig({ children }: { children: React.ReactNode }) {
   return <group ref={ref}>{children}</group>;
 }
 
-/** Full-bleed cinematic hero: Memi floating in a particle void, parallax on mouse. */
+/** Full-bleed cinematic hero: Memi floating in a particle void, parallax on mouse + scroll dolly. */
 export function HeroScene({ mood = "idle" }: { mood?: MemiMode }) {
   return (
     <Canvas
@@ -153,7 +153,9 @@ export function HeroScene({ mood = "idle" }: { mood?: MemiMode }) {
         <Stars count={140} radius={4} color="#f0abfc" size={0.02} opacity={0.5} />
         <Dolly>
           <group scale={1.05} position={[0.92, 0, 0]}>
-            <Chibi mode={mood} />
+            <Suspense fallback={null}>
+              <Chibi mode={mood} hero />
+            </Suspense>
           </group>
         </Dolly>
       </Rig>

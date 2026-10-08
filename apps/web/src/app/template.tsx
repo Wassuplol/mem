@@ -1,4 +1,6 @@
-/** Route-level transition: every navigation plays a cinematic entrance. */
+import { PageTransition } from "@/components/effects/page-transition";
+
+/** Route-level wipe: every navigation plays a cinematic slide. */
 export default function Template({ children }: { children: React.ReactNode }) {
-  return <div className="page-enter">{children}</div>;
+  return <PageTransition>{children}</PageTransition>;
 }
