@@ -113,7 +113,7 @@ export function AppShell({
             Invite Mem
             <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
-          <div className="flex items-center justify-between px-1 text-[11px] text-zinc-600">
+          <div className="flex items-center justify-between pl-12 pr-1 text-[11px] text-zinc-600">
             <a
               href="https://github.com/Wassuplol/mem"
               target="_blank"
