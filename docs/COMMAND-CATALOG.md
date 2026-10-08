@@ -213,7 +213,7 @@ Engineering gotchas (from builders who hit the wall):
 
 | Command | Notes | Status |
 | --- | --- | --- |
-| `/ticket` | sub: open / close / add / remove / rename + panel (paid in incumbents) | 📅 |
+| `/ticket` | sub: panel / open / close / claim / add / remove / rename / staffrole / log / config | ✅ |
 
 ### N. Temp voice — 1
 
@@ -567,14 +567,15 @@ Status: L = live, N = next (buildable in current phases), P = planned (later/inf
 
 ### M. Tickets - 9
 
-- [N] `/ticket panel` - post setup panel (button)
-- [N] `/ticket open` - open ticket (threads)
-- [N] `/ticket close` - close + transcript
-- [N] `/ticket claim` - claim as staff
-- [N] `/ticket add` - add member to ticket
-- [N] `/ticket remove` - remove member
-- [N] `/ticket rename` - rename ticket
+- [L] `/ticket panel` - post setup panel (button)
+- [L] `/ticket open` - open ticket (private threads)
+- [L] `/ticket close` - close + auto transcript to log
+- [L] `/ticket claim` - claim as staff
+- [L] `/ticket add` - add member to ticket
+- [L] `/ticket remove` - remove member
+- [L] `/ticket rename` - rename ticket
 - [N] `/ticket transcript` - save transcript
+- [L] `/ticket staffrole / log / config` - settings (ManageGuild)
 - [P] `/ticket categories` - multi-panel routing
 
 ### N. Temp voice - 8

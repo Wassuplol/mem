@@ -240,4 +240,27 @@ export const levels = pgTable(
 
 export type Level = typeof levels.$inferSelect;
 
+/** Support tickets: one row per ticket thread (status open|closed). */
+export const tickets = pgTable(
+  "tickets",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    channelId: text("channel_id").notNull(), // thread id
+    messageId: text("message_id"), // intro message in the thread
+    userId: text("user_id").notNull(), // opener
+    status: text("status").notNull().default("open"), // open | closed
+    claimedBy: text("claimed_by"),
+    closeReason: text("close_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("tickets_guild_status_idx").on(t.guildId, t.status),
+    uniqueIndex("tickets_channel_idx").on(t.channelId),
+  ],
+);
+
+export type Ticket = typeof tickets.$inferSelect;
+
 export * from "./schema/auth";

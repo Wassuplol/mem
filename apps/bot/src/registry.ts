@@ -10,6 +10,7 @@ import { pollsModule } from "./modules/polls";
 import { remindersModule } from "./modules/reminders";
 import { rolesModule } from "./modules/roles";
 import { temprolesModule } from "./modules/temproles";
+import { ticketsModule } from "./modules/tickets";
 import { utilityModule } from "./modules/utility";
 import { welcomeModule } from "./modules/welcome";
 
@@ -28,6 +29,7 @@ for (const feature of [
   temprolesModule,
   apikeysModule,
   levelingModule,
+  ticketsModule,
 ]) {
   registry.register(feature);
 }

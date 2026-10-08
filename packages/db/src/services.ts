@@ -3,7 +3,7 @@ import { and, count, desc, eq, gt, isNotNull, isNull, lt, lte, ne, sql } from "d
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 import { levelFromXp } from "./levels";
-import { apiKeys, giveawayEntries, giveaways, guildSettings, guilds, levels, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, type ApiKey, type Giveaway, type GiveawayEntry, type Level, type ModCase, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
+import { apiKeys, giveawayEntries, giveaways, guildSettings, guilds, levels, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, tickets, type ApiKey, type Giveaway, type GiveawayEntry, type Level, type ModCase, type Ticket, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -715,6 +715,74 @@ export function createServices(db: Db) {
         .select({ n: count() })
         .from(levels)
         .where(and(eq(levels.guildId, guildId), gt(levels.xp, 0)));
+      return Number(row?.n ?? 0);
+    },
+
+    /* ---------- tickets ---------- */
+
+    async createTicket(input: { guildId: string; channelId: string; userId: string }): Promise<Ticket> {
+      const [row] = await db
+        .insert(tickets)
+        .values({ id: randomUUID(), guildId: input.guildId, channelId: input.channelId, userId: input.userId })
+        .returning();
+      if (!row) throw new Error("Could not create ticket");
+      return row;
+    },
+
+    /** Stores the intro message id once posted (used to update claim/close state). */
+    async setTicketMessage(ticketId: string, messageId: string): Promise<void> {
+      await db.update(tickets).set({ messageId }).where(eq(tickets.id, ticketId));
+    },
+
+    async getTicketByChannel(channelId: string): Promise<Ticket | null> {
+      const rows = await db.select().from(tickets).where(eq(tickets.channelId, channelId)).limit(1);
+      return rows[0] ?? null;
+    },
+
+    async getOpenTicketForUser(guildId: string, userId: string): Promise<Ticket | null> {
+      const rows = await db
+        .select()
+        .from(tickets)
+        .where(and(eq(tickets.guildId, guildId), eq(tickets.userId, userId), eq(tickets.status, "open")))
+        .limit(1);
+      return rows[0] ?? null;
+    },
+
+    /** Sets claimedBy when the ticket is still open; false otherwise. */
+    async claimTicket(ticketId: string, staffId: string): Promise<boolean> {
+      const rows = await db
+        .update(tickets)
+        .set({ claimedBy: staffId })
+        .where(and(eq(tickets.id, ticketId), eq(tickets.status, "open")))
+        .returning({ id: tickets.id });
+      return rows.length > 0;
+    },
+
+    /** Marks a ticket closed; false when it was not open. */
+    async closeTicket(ticketId: string, reason: string | null): Promise<boolean> {
+      const rows = await db
+        .update(tickets)
+        .set({ status: "closed", closeReason: reason, closedAt: new Date() })
+        .where(and(eq(tickets.id, ticketId), eq(tickets.status, "open")))
+        .returning({ id: tickets.id });
+      return rows.length > 0;
+    },
+
+    async listTickets(guildId: string, opts: { status?: string; limit?: number } = {}): Promise<Ticket[]> {
+      const limit = Math.min(Math.max(opts.limit ?? 25, 1), 100);
+      return db
+        .select()
+        .from(tickets)
+        .where(opts.status ? and(eq(tickets.guildId, guildId), eq(tickets.status, opts.status)) : eq(tickets.guildId, guildId))
+        .orderBy(desc(tickets.createdAt))
+        .limit(limit);
+    },
+
+    async countOpenTickets(guildId: string): Promise<number> {
+      const [row] = await db
+        .select({ n: count() })
+        .from(tickets)
+        .where(and(eq(tickets.guildId, guildId), eq(tickets.status, "open")));
       return Number(row?.n ?? 0);
     },
   };

@@ -142,8 +142,9 @@ export const MODULES: ModuleInfo[] = [
     id: "tickets",
     name: "Tickets & modmail",
     icon: Ticket,
-    description: "Support panels, private threads, transcripts, modmail. On the build queue.",
-    status: "soon",
+    description: "Support panels, private threads, claim/close flows and transcripts. Modmail coming later.",
+    status: "live",
+    commands: 1,
     accent: "from-teal-500/25 to-emerald-500/10 text-teal-300",
   },
   {
