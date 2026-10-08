@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { GithubMark } from "@/components/icons";
-import { MODULES, STATS } from "@/lib/modules";
+import { LIVE_MODULES, MODULES, STATS } from "@/lib/modules";
 import { INVITE_URL } from "@/components/app-shell";
 
 async function Greeting() {
@@ -64,7 +64,7 @@ function GreetingSkeleton() {
 
 const STAT_CARDS = [
   { icon: Terminal, label: "Commands live", value: STATS.commands, sub: `across ${STATS.modules} modules` },
-  { icon: Boxes, label: "Feature modules", value: 8, sub: "plus core & 4 on the way" },
+  { icon: Boxes, label: "Feature modules", value: LIVE_MODULES.length, sub: `plus core & ${MODULES.length - LIVE_MODULES.length} on the way` },
   { icon: Radio, label: "Gateway events", value: STATS.events, sub: "logging · welcome · reminders" },
   { icon: MousePointerClick, label: "Component engines", value: STATS.components, sub: "help · poll · roles" },
 ];

@@ -263,4 +263,20 @@ export const tickets = pgTable(
 
 export type Ticket = typeof tickets.$inferSelect;
 
+/** Private staff notes about members (never shown to the target). */
+export const modNotes = pgTable(
+  "mod_notes",
+  {
+    id: text("id").primaryKey(), // uuid
+    guildId: text("guild_id").notNull(),
+    userId: text("user_id").notNull(),
+    authorId: text("author_id").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("mod_notes_guild_user_idx").on(t.guildId, t.userId)],
+);
+
+export type ModNote = typeof modNotes.$inferSelect;
+
 export * from "./schema/auth";

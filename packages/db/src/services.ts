@@ -3,7 +3,7 @@ import { and, count, desc, eq, gt, isNotNull, isNull, lt, lte, ne, sql } from "d
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 import { levelFromXp } from "./levels";
-import { apiKeys, giveawayEntries, giveaways, guildSettings, guilds, levels, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, tickets, type ApiKey, type Giveaway, type GiveawayEntry, type Level, type ModCase, type Ticket, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
+import { apiKeys, giveawayEntries, giveaways, guildSettings, guilds, levels, modCases, pollVotes, polls, reminders, rolePanelEntries, rolePanels, scheduledTasks, tempRoles, modNotes, tickets, type ApiKey, type Giveaway, type GiveawayEntry, type Level, type ModCase, type ModNote, type Ticket, type Poll, type Reminder, type RolePanel, type RolePanelEntry, type ScheduledTask, type TempRole } from "./schema";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -784,6 +784,63 @@ export function createServices(db: Db) {
         .from(tickets)
         .where(and(eq(tickets.guildId, guildId), eq(tickets.status, "open")));
       return Number(row?.n ?? 0);
+    },
+    /* ---------- mod notes ---------- */
+
+    async addNote(input: { guildId: string; userId: string; authorId: string; content: string }): Promise<ModNote> {
+      const [row] = await db
+        .insert(modNotes)
+        .values({ id: randomUUID(), ...input })
+        .returning();
+      if (!row) throw new Error("Could not add note");
+      return row;
+    },
+
+    async listNotes(guildId: string, userId: string, limit = 10): Promise<ModNote[]> {
+      return db
+        .select()
+        .from(modNotes)
+        .where(and(eq(modNotes.guildId, guildId), eq(modNotes.userId, userId)))
+        .orderBy(desc(modNotes.createdAt))
+        .limit(limit);
+    },
+
+    async countNotes(guildId: string, userId: string): Promise<number> {
+      const [row] = await db
+        .select({ n: count() })
+        .from(modNotes)
+        .where(and(eq(modNotes.guildId, guildId), eq(modNotes.userId, userId)));
+      return Number(row?.n ?? 0);
+    },
+
+    /** Delete a note by short-id prefix (as shown in /note list). */
+    async removeNoteByPrefix(guildId: string, prefix: string): Promise<ModNote | null> {
+      const clean = prefix.replace(/[^a-f0-9-]/gi, "").slice(0, 36);
+      if (clean.length < 4) return null;
+      const [row] = await db
+        .select()
+        .from(modNotes)
+        .where(and(eq(modNotes.guildId, guildId), sql`${modNotes.id} like ${clean + "%"}`))
+        .limit(1);
+      if (!row) return null;
+      await db.delete(modNotes).where(eq(modNotes.id, row.id));
+      return row;
+    },
+
+    /* ---------- mod stats ---------- */
+
+    async modStats(guildId: string, moderatorId: string): Promise<Array<{ action: string; total: number; recent: number }>> {
+      const since = new Date(Date.now() - 30 * 86400_000);
+      const rows = await db
+        .select({
+          action: modCases.action,
+          total: count(),
+          recent: sql<number>`count(*) filter (where ${modCases.createdAt} >= ${since})`,
+        })
+        .from(modCases)
+        .where(and(eq(modCases.guildId, guildId), eq(modCases.moderatorId, moderatorId)))
+        .groupBy(modCases.action);
+      return rows.map((r) => ({ action: r.action, total: Number(r.total), recent: Number(r.recent) }));
     },
   };
 }

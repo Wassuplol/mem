@@ -71,6 +71,13 @@
       "when": 1791458002077,
       "tag": "0009_cloudy_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791471178525,
+      "tag": "0010_daily_thunderbolts",
+      "breakpoints": true
     }
   ]
 }

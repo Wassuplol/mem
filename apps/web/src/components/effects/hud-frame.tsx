@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 /** Fixed HUD chrome: corner brackets, top bar (nav + clock + scroll %), status line. */
 export function HudFrame() {
+  const pathname = usePathname();
   const [clock, setClock] = useState("--:--:--");
   const [scrollPct, setScrollPct] = useState(0);
 
@@ -28,6 +30,9 @@ export function HudFrame() {
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
+
+  // The HUD is landing-page chrome; on app pages it collides with the sidebar/topbar.
+  if (pathname !== "/") return null;
 
   return (
     <div aria-hidden={false} className="pointer-events-none fixed inset-0 z-40 hidden font-hud md:block">
@@ -76,7 +81,7 @@ export function HudFrame() {
       {/* bottom status */}
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-6 py-3 text-[10px] uppercase tracking-[0.24em] text-zinc-600">
         <span>v0.1 // MIT — free forever</span>
-        <span className="hidden lg:inline">51 cmds · 18 modules · 0 paywalls</span>
+        <span className="hidden lg:inline">59 cmds · 19 modules · 0 paywalls</span>
       </div>
     </div>
   );

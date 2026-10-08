@@ -91,11 +91,11 @@ Engineering gotchas (from builders who hit the wall):
 | `/warn` `/warnings` `/removewarn` | Case-linked warnings in Postgres | ✅ |
 | `/timeout` `/untimeout` `/mute` `/unmute` | Timed restrictions | ✅ |
 | `/purge` `/slowmode` | Bulk delete, rate limits | ✅ |
-| `/lock` | sub: channel / server (server = lockdown) | 🔜 |
-| `/softban` | Ban+unban to clear messages | 🔜 |
+| `/lock` `/unlock` | channel lock/unlock (server-wide = `/lockdown`) | ✅ |
+| `/softban` | Ban+unban to clear messages (1-7d purge, case-logged) | ✅ |
 | `/case` | v1 live: view / list — reason / edit next | ✅ |
-| `/note` | sub: add / list / remove — mod notes (Dyno parity) | 🔜 |
-| `/modstats` | Per-moderator action counts | 🔜 |
+| `/note` | sub: add / list / remove — mod notes (Dyno parity) | ✅ |
+| `/modstats` | Per-moderator action counts (30d + all-time) | ✅ |
 | `/report` | Member → staff report, routed to mod-log channel | 🔜 |
 
 ### C. Logging & audit — 3
@@ -140,9 +140,9 @@ Engineering gotchas (from builders who hit the wall):
 | `/embed` | Custom embed builder (free — premium elsewhere) | 🔜 |
 | `/pin` | Pin/unpin the latest message (or by ID) | ✅ |
 | `/serverstats` | Live cached stats; saved counter snapshots + goals later | ✅ v1 |
-| `/snipe` | Recent deleted messages (per-channel ring buffer) | 🔜 |
+| `/snipe` `/editsnipe` | Recent deleted / edited messages (per-channel capped buffer) | ✅ |
 | `/reminder` | sub: set / list / delete / channel; natural durations (`1h30m`) | 🔜 |
-| `/calc` | Math expression | 🔜 |
+| `/calc` | Math expression (safe parser, no eval) | ✅ |
 | `/timestamp` | Generate copy-paste Discord timestamp formats | 🔜 |
 | `/roleinfo` | Role details + hierarchy check | 🔜 |
 | `/permissions` | Effective permissions of a user in a channel (viewperms) | 🔜 |

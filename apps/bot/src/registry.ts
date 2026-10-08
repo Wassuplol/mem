@@ -5,6 +5,7 @@ import { helpModule } from "./modules/help";
 import { levelingModule } from "./modules/leveling";
 import { loggingModule } from "./modules/logging";
 import { moderationModule } from "./modules/moderation";
+import { modtoolsModule } from "./modules/modtools";
 import { pingModule } from "./modules/ping";
 import { pollsModule } from "./modules/polls";
 import { remindersModule } from "./modules/reminders";
@@ -22,6 +23,7 @@ export const registry = new ModuleRegistry();
 for (const feature of [
   pingModule,
   moderationModule,
+  modtoolsModule,
   utilityModule,
   loggingModule,
   welcomeModule,

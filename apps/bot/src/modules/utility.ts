@@ -11,6 +11,71 @@ function formatUptime(seconds: number): string {
   return [d > 0 ? `${d}d` : null, `${h}h`, `${m}m`, `${s}s`].filter(Boolean).join(" ");
 }
 
+
+/** Tiny recursive-descent evaluator - numbers, + - * / % ^, parentheses, unary minus. No eval. */
+function safeEval(input: string): number {
+  const src = input.replace(/\s+/g, "");
+  if (!src || !/^[0-9+\-*/%^().]+$/.test(src)) throw new Error("bad characters");
+  let pos = 0;
+  const peek = () => src[pos];
+  const parseExpr = (): number => {
+    let v = parseTerm();
+    while (peek() === "+" || peek() === "-") {
+      const op = src[pos++];
+      const r = parseTerm();
+      v = op === "+" ? v + r : v - r;
+    }
+    return v;
+  };
+  const parseTerm = (): number => {
+    let v = parseFactor();
+    while (peek() === "*" || peek() === "/" || peek() === "%") {
+      const op = src[pos++];
+      const r = parseFactor();
+      v = op === "*" ? v * r : op === "/" ? v / r : v % r;
+    }
+    return v;
+  };
+  const parseFactor = (): number => {
+    const v = parseUnary();
+    if (peek() === "^") {
+      pos++;
+      return Math.pow(v, parseFactor());
+    }
+    return v;
+  };
+  const parseUnary = (): number => {
+    if (peek() === "-") {
+      pos++;
+      return -parseUnary();
+    }
+    if (peek() === "+") {
+      pos++;
+      return parseUnary();
+    }
+    return parseAtom();
+  };
+  const parseAtom = (): number => {
+    if (peek() === "(") {
+      pos++;
+      const v = parseExpr();
+      if (peek() !== ")") throw new Error("unbalanced parentheses");
+      pos++;
+      return v;
+    }
+    const start = pos;
+    while (pos < src.length && /[0-9.]/.test(src[pos] ?? "")) pos++;
+    if (pos === start) throw new Error("expected a number");
+    const n = Number(src.slice(start, pos));
+    if (!Number.isFinite(n)) throw new Error("not a finite number");
+    return n;
+  };
+  const value = parseExpr();
+  if (pos !== src.length) throw new Error("trailing characters");
+  if (!Number.isFinite(value)) throw new Error("result is not finite");
+  return value;
+}
+
 export const utilityModule = defineModule({
   id: "utility",
   name: "Utility",
@@ -206,6 +271,25 @@ export const utilityModule = defineModule({
               .setFooter({ text: `ID ${g.id} - created <t:${Math.floor(g.createdTimestamp / 1000)}:R>` }),
           ],
         });
+      },
+    },
+    {
+      data: new SlashCommandBuilder()
+        .setName("calc")
+        .setDescription("Calculate a math expression (+ - * / % ^ and parentheses).")
+        .addStringOption((o) => o.setName("expression").setDescription("e.g. (12+8)/4 * 2^3").setRequired(true).setMaxLength(200)),
+      async execute(interaction) {
+        const expr = interaction.options.getString("expression", true);
+        try {
+          const value = safeEval(expr);
+          const shown = Number.isInteger(value) ? String(value) : String(Math.round(value * 1e9) / 1e9);
+          await interaction.reply({ embeds: [embed({ title: "Calculator", description: `\`${expr}\` = **${shown}**` })] });
+        } catch {
+          await interaction.reply({
+            content: "I couldn't parse that - use numbers with `+ - * / % ^` and parentheses.",
+            flags: 64,
+          });
+        }
       },
     },
   ],
